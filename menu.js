@@ -255,6 +255,34 @@
     window.print();
   });
 
+  // ------------------------------------------------------------------
+  // AÇIK / KOYU TEMA
+  // İlk açılışta bilgisayarın ayarı geçerli; düğmeye basınca seçim saklanır.
+  // ------------------------------------------------------------------
+  const GUNES = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>';
+  const AY = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  const sistemAcik = window.matchMedia('(prefers-color-scheme: light)');
+
+  function aktifTema() {
+    return document.documentElement.dataset.theme || (sistemAcik.matches ? 'light' : 'dark');
+  }
+  function temaDugmesiniGuncelle() {
+    const acik = aktifTema() === 'light';
+    // Düğme, geçilecek temayı gösterir
+    $('tema-ikon').innerHTML = acik ? AY : GUNES;
+    $('tema-yazi').textContent = acik ? 'Koyu tema' : 'Açık tema';
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = acik ? '#ffffff' : '#081a10';
+  }
+  $('tema-dugme').addEventListener('click', () => {
+    const yeni = aktifTema() === 'light' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = yeni;
+    try { localStorage.setItem('odeme-tema', yeni); } catch (e) { /* saklanamazsa sorun değil */ }
+    temaDugmesiniGuncelle();
+  });
+  sistemAcik.addEventListener('change', temaDugmesiniGuncelle);
+  temaDugmesiniGuncelle();
+
   // Açılışta adresteki programı göster
   goster(location.hash);
 })();

@@ -9,6 +9,10 @@
   <link rel="icon" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="style.css">
+  <script>
+    // Kayıtlı tema seçimini sayfa çizilmeden uygula (yanıp sönme olmasın)
+    try { var t = localStorage.getItem('odeme-tema'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
 </head>
 <body>
   <!-- SOL MENÜ: tıklanan program ortada açılır -->
@@ -17,6 +21,12 @@
       <img src="icons/icon-192.png" alt="" width="32" height="32">
       <span>SOLİBET<br><small>Kasa Araçları</small></span>
     </div>
+
+    <!-- Açık / koyu tema düğmesi -->
+    <button type="button" class="tema-dugme" id="tema-dugme" aria-label="Temayı değiştir">
+      <svg id="tema-ikon" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
+      <span id="tema-yazi">Açık tema</span>
+    </button>
 
     <p class="menu-baslik">Ödeme</p>
     <a href="#odeme" data-gorunum="odeme">Ödeme Hesaplayıcı</a>
