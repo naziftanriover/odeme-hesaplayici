@@ -18,12 +18,21 @@ const TAMAM_SINIRI = 1;
 // SAF HESAP FONKSİYONLARI (ekranla ilgisi yok, kolayca değiştirilebilir)
 // ---------------------------------------------------------------------
 
+// Yazılan metin geçerli bir sayı mı? Sadece rakam, nokta ve virgül olabilir.
+// Boş alan geçerlidir (0 sayılır). Eksi sayı, harf, "1e5" gibi yazımlar geçersizdir.
+function sayiGecerliMi(metin) {
+  const s = String(metin ?? '').replace(/\s/g, '');
+  return s === '' || (/^[\d.,]+$/.test(s) && /\d/.test(s));
+}
+
 // Yazılan metni sayıya çevirir. Nokta da virgül de ondalık sayılır:
 // "1392" → 1392, "66,8" → 66.8, "66.8" → 66.8, "1.234,56" → 1234.56
+// Geçersiz yazım 0 döner (ekranda alan kırmızı gösterilir).
 function sayiyaCevir(metin) {
   if (metin == null) return 0;
   let s = String(metin).trim().replace(/\s/g, '');
-  if (s === '') return 0;
+  if (s === '' || !sayiGecerliMi(s)) return 0;
+  s = s.replace(/[.,]+$/, ''); // yazarken sona konan ayraç ("12,") yok sayılır
 
   // Nokta ve virgül aynı işi görür: tek ayraç varsa ondalıktır.
   //   "66.8" = "66,8" = 66,8    |   "50.125" = "50,125" = 50,125
@@ -58,14 +67,22 @@ function hesaplaToplam(satirlar) {
   return satirlar.reduce((t, s) => t + hesaplaTlKarsiligi(s.miktar, s.kur), 0);
 }
 
-// KALAN = Ödenecek Tutar − TOPLAM
+// Kuruşa yuvarlar, yarım kuruşu sıfırdan uzağa (bahis motoruyla aynı kural).
+// toPrecision küçük kayan nokta hatalarını temizler (1.005 → 1.01).
+function kurusaYuvarla(x) {
+  const r = Math.sign(x) * Math.round(Number((Math.abs(x) * 100).toPrecision(15))) / 100;
+  return r || 0; // -0 yerine 0
+}
+
+// KALAN = Ödenecek Tutar − TOPLAM (kuruşa yuvarlı, "-0,00" çıkmaz)
 function hesaplaKalan(odenecek, toplam) {
-  return odenecek - toplam;
+  return kurusaYuvarla(odenecek - toplam);
 }
 
 // Kalanı tamamlamak için gereken döviz adedi = KALAN / kur
+// Kur girilmemişse hesaplanamaz: NaN döner, ekranda "—" görünür.
 function hesaplaKalanDoviz(kalan, kur) {
-  return kur > 0 ? kalan / kur : 0;
+  return kur > 0 ? kalan / kur : NaN;
 }
 
 // KALAN'ın durumu: 'tamam' (yeşil), 'eksik' (kırmızı), 'fazla' (mavi)
@@ -83,7 +100,10 @@ function hesaplaBanknotToplam(adetler, coins) {
 }
 
 // Sayıyı Türkçe biçimde yazar: 199999.6 → "199.999,60"
+// Yuvarlanınca sıfır olan küçük eksi değerler "-0,00" değil "0,00" yazılır.
 function bicimle(sayi, ondalik = 2) {
+  if (!Number.isFinite(sayi)) return '—';
+  sayi = Number(sayi.toFixed(ondalik)) || 0;
   return new Intl.NumberFormat('tr-TR', {
     minimumFractionDigits: ondalik,
     maximumFractionDigits: ondalik,
@@ -93,7 +113,7 @@ function bicimle(sayi, ondalik = 2) {
 // Node.js ile test edebilmek için fonksiyonları dışa aç
 if (typeof module !== 'undefined') {
   module.exports = {
-    sayiyaCevir, hesaplaTlKarsiligi, hesaplaToplam, hesaplaKalan,
+    sayiyaCevir, sayiGecerliMi, kurusaYuvarla, hesaplaTlKarsiligi, hesaplaToplam, hesaplaKalan,
     hesaplaKalanDoviz, kalanDurumu, bicimle, hesaplaBanknotToplam,
   };
 }
@@ -120,6 +140,12 @@ if (typeof document !== 'undefined') {
 
   // Ekrandaki değerleri okuyup her şeyi yeniden hesaplar
   function guncelle() {
+    // Geçersiz yazılmış alanları kırmızı göster (eksi sayı, harf vb.)
+    document.querySelectorAll('#gorunum-odeme input').forEach((el) => {
+      const kupur = el.dataset.kupur;
+      const gecerli = sayiGecerliMi(el.value) && (!kupur || /^\d*$/.test(el.value.trim()));
+      el.classList.toggle('hatali', !gecerli);
+    });
     const odenecek = sayiyaCevir($('odenecek').value);
 
     const satirlar = DOVIZLER.map((d) => {
@@ -148,8 +174,9 @@ if (typeof document !== 'undefined') {
     ['STG', 'USD', 'EUR'].forEach((d) => {
       const adet = hesaplaKalanDoviz(kalan, satirlar.find((s) => s.doviz === d).kur);
       const alan = $('kalan-' + d);
-      alan.textContent = bos ? '—' : bicimle(adet, 2);
-      alan.dataset.durum = bos ? '' : durum;
+      const yok = bos || !Number.isFinite(adet);
+      alan.textContent = yok ? '—' : bicimle(adet, 2);
+      alan.dataset.durum = yok ? '' : durum;
     });
   }
 
@@ -163,7 +190,11 @@ if (typeof document !== 'undefined') {
   // Girilen adetleri { 200: adet, 100: adet, ... } olarak okur
   function adetleriOku() {
     const adetler = {};
-    kupurAlanlari.forEach((el) => { adetler[el.dataset.kupur] = sayiyaCevir(el.value); });
+    // Adet tam sayı olmalı; "2,5" gibi yazımlar geçersiz sayılır (alan kırmızı olur)
+    kupurAlanlari.forEach((el) => {
+      const v = el.value.trim();
+      adetler[el.dataset.kupur] = /^\d+$/.test(v) ? Number(v) : 0;
+    });
     return adetler;
   }
   function banknotGirildiMi() {
@@ -177,7 +208,8 @@ if (typeof document !== 'undefined') {
   // Adet değişince TL miktarını otomatik yaz
   function banknottanTlYaz() {
     const toplam = hesaplaBanknotToplam(adetleriOku(), sayiyaCevir($('coins').value));
-    $('miktar-TL').value = banknotGirildiMi() ? bicimle(toplam) : '';
+    // Binlik noktası olmadan yazılır ("1014,00"); kasiyer düzeltirse yanlış okunmaz
+    $('miktar-TL').value = banknotGirildiMi() ? toplam.toFixed(2).replace('.', ',') : '';
     $('banknot-ozet').textContent = banknotGirildiMi() ? '= ' + bicimle(toplam) + ' ₺' : '';
   }
 
@@ -249,13 +281,16 @@ if (typeof document !== 'undefined') {
     const durum = kalanDurumu(kalan);
     if (durum === 'eksik') html += s('KALAN', bicimle(kalan) + ' ₺');
     else if (durum === 'fazla') html += s('PARA ÜSTÜ', bicimle(-kalan) + ' ₺');
-    else if (kalan !== 0) html += s('Yuvarlama farkı', bicimle(kalan) + ' ₺', 'kucuk');
+    else if (Math.abs(kalan) >= 0.005) html += s('Yuvarlama farkı', bicimle(kalan) + ' ₺', 'kucuk');
     html += '<div class="kalin-cizgi"></div>';
     html += '<div class="imza">Müşteri İmza</div>';
     html += '<div class="orta kucuk">Bizi tercih ettiğiniz için teşekkürler</div>';
 
     $('fis').innerHTML = html;
   }
+
+  // Fiş, yazdırma anında ekrandaki değerlerden hazırlanır (menu.js beforeprint)
+  window.odemeFisHazirla = fisHazirla;
 
   $('yazdir').addEventListener('click', () => {
     fisHazirla();

@@ -7,6 +7,9 @@
 (function () {
   const $ = (id) => document.getElementById(id);
   const tl = (x) => bicimle(x); // app.js'teki Türkçe sayı biçimi
+  // Kasiyerin yazdığı metni HTML içine güvenle koymak için
+  const kacis = (m) => String(m).replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   // ------------------------------------------------------------------
   // GÖRÜNÜM DEĞİŞTİRME
@@ -90,9 +93,9 @@
       `<option value="${n}"${Number(v.dh) === n ? ' selected' : ''}>${n === 1 ? 'Yok' : n + ' at'}</option>`).join('');
     return `<div class="l-satir" data-sira="${i}" data-sonuc="${v.sonuc}">
       <span class="l-no">${i + 1}</span>
-      <input class="l-oran" inputmode="text" autocomplete="off" placeholder="${oranTipi() === 'kesirli' ? '5/2' : '3,50'}" value="${v.oran}">
+      <input class="l-oran" inputmode="text" autocomplete="off" placeholder="${oranTipi() === 'kesirli' ? '5/2' : '3,50'}" value="${kacis(v.oran)}">
       <select class="l-sonuc">${secenek}</select>
-      <input class="l-r4" inputmode="numeric" autocomplete="off" placeholder="0" value="${v.r4}">
+      <input class="l-r4" inputmode="numeric" autocomplete="off" placeholder="0" value="${kacis(v.r4)}">
       <select class="l-dh">${dh}</select>
     </div>`;
   }
@@ -109,7 +112,8 @@
   // Seçilen türe göre ekranı kurar (seçim sayısı, başlık, açıklama)
   function luckyKur(kod) {
     if (aktifTur === kod) return;
-    if (aktifTur) kayit = satirlariOku();
+    // Ekrandaki satırlar kaydedilir; küçük türe geçip dönünce fazla satırlar kaybolmaz
+    if (aktifTur) { const ekran = satirlariOku(); kayit = ekran.concat(kayit.slice(ekran.length)); }
     aktifTur = kod;
     const t = LUCKY_TURLER[kod];
     $('l-baslik').textContent = t.ad;
@@ -120,7 +124,7 @@
     }
     $('l-secimler').innerHTML = html;
     // Tek kazanan bonusu sadece teklisi olan türlerde (Patent, Lucky) anlamlı
-    $('l-carpan-alan').hidden = t.enAz !== 1;
+    $('l-carpan-alan').hidden = !t.tekli;
     luckyGuncelle();
   }
 
@@ -131,25 +135,30 @@
     const [pay, payda] = $('l-plase').value.split('/').map(Number);
     const ewMod = $('l-ew').value;
     const satirlar = satirlariOku();
-    const hatalar = [];
+    const hatalar = [];      // oranı eksik/hatalı satırlar
+    const r4Hatalari = [];   // Rule 4 0-90 dışında veya hatalı yazılmış satırlar
     const secimler = satirlar.map((s, i) => {
       const oran = oranCevir(s.oran);
-      if (s.sonuc !== 'void' && s.sonuc !== 'lost' && !(oran > 1)) hatalar.push(i + 1);
+      const oynadi = s.sonuc === 'won' || s.sonuc === 'placed';
+      if (oynadi && !(oran > 1)) hatalar.push(i + 1);
+      const r4 = sayiyaCevir(s.r4);
+      if (!sayiGecerliMi(s.r4) || r4 > 90) r4Hatalari.push(i + 1);
       return {
         oran: oran > 1 ? oran : 2, // kaybeden/NR atın oranı hesabı etkilemez
+        oranGecerli: oran > 1,
         sonuc: s.sonuc,
-        rule4: Math.min(sayiyaCevir(s.r4), 90),
-        dhKazan: Number(s.dh) || 1,
+        rule4: Math.min(r4, 90),
+        dhKazan: oynadi ? (Number(s.dh) || 1) : 1, // dead heat sadece kazanan/plase atta
       };
     });
     return {
-      hatalar, birim, satirlar,
+      hatalar, r4Hatalari, birim, birimGecerli: sayiGecerliMi($('l-birim').value), satirlar,
       girdi: {
         tur: aktifTur, secimler, birimBahis: birim,
         ew: Boolean(ewMod), ewMod: ewMod || 'winToWin',
         plaseKesri: { pay, payda },
         bonusHepsiYuzde: sayiyaCevir($('l-bonus-yuzde').value),
-        bonusTekKazanCarpan: t.enAz === 1 ? sayiyaCevir($('l-bonus-carpan').value) : 0,
+        bonusTekKazanCarpan: t.tekli ? sayiyaCevir($('l-bonus-carpan').value) : 0,
       },
     };
   }
@@ -164,14 +173,20 @@
     });
     $('l-plase').disabled = !$('l-ew').value;
 
-    const { hatalar, birim, girdi } = luckyGirdi();
+    const { hatalar, r4Hatalari, birim, birimGecerli, girdi } = luckyGirdi();
     const satir = satirSayisi(aktifTur) * (girdi.ew ? 2 : 1);
     $('l-satir-notu').textContent = `${satir} satır × ${tl(birim)}`;
 
     const hata = $('l-hata');
-    if (!birim || hatalar.length) {
-      hata.textContent = !birim ? 'Satır başı bahis tutarını yaz.'
-        : `Oran eksik veya hatalı: ${hatalar.join(', ')}. seçim`;
+    $('l-birim').classList.toggle('hatali', !birimGecerli);
+    document.querySelectorAll('#l-secimler .l-satir').forEach((sat, i) => {
+      sat.querySelector('.l-oran').classList.toggle('hatali', hatalar.includes(i + 1));
+      sat.querySelector('.l-r4').classList.toggle('hatali', r4Hatalari.includes(i + 1));
+    });
+    if (!(birim > 0) || hatalar.length || r4Hatalari.length) {
+      hata.textContent = !(birim > 0) ? 'Satır başı bahis tutarını yaz (0\'dan büyük).'
+        : hatalar.length ? `Oran eksik veya hatalı: ${hatalar.join(', ')}. seçim`
+        : `Rule 4 0 ile 90 arasında olmalı: ${r4Hatalari.join(', ')}. seçim`;
       $('l-toplam-bahis').textContent = tl(birim * satir);
       $('l-getiri').textContent = '0,00';
       $('l-kar').textContent = '—';
@@ -219,8 +234,10 @@
   });
 
   // ---------------- Lucky termal fişi ----------------
-  $('l-yazdir').addEventListener('click', () => {
-    if (!sonHesap) { luckyGuncelle(); if (!sonHesap) return; }
+  // Fişi son hesaptan hazırlar. Hesap eksikse false döner.
+  function luckyFisHazirla() {
+    luckyGuncelle();
+    if (!sonHesap) return false;
     const { r, girdi } = sonHesap;
     const t = LUCKY_TURLER[girdi.tur];
     const satirlar = satirlariOku();
@@ -246,9 +263,10 @@
       const sec = girdi.secimler[i];
       // Oran fişte seçilen tipte, yanında diğer tipte yazılır: "4/1 (5,00)" ya da "5,00 (4/1)"
       // Kasiyer kesir yazdıysa (6/4 gibi) aynen korunur
-      const yazilan = sat.oran.trim().toUpperCase();
-      const kesirHali = /[/-]|EV/.test(yazilan) ? yazilan.replace('-', '/') : kesirliYaz(sec.oran);
-      const oranYazi = !yazilan ? '—'
+      // Oranı okunamayan kaybeden/NR at için "—" yazılır
+      const yazilan = sat.oran.trim().toUpperCase().replace(/\s/g, '');
+      const kesirHali = /[/-]|EV/.test(yazilan) ? kacis(yazilan.replace('-', '/')) : kesirliYaz(sec.oran);
+      const oranYazi = !sec.oranGecerli ? '—'
         : oranTipi() === 'kesirli' ? `${kesirHali} (${tl(sec.oran)})`
         : `${tl(sec.oran)} (${kesirHali})`;
       h += s(`${i + 1}. ${oranYazi}`, sonucAdi[sat.sonuc]);
@@ -275,8 +293,21 @@
     h += '<div class="orta kucuk">Bilgi amaçlıdır</div>';
 
     $('fis').innerHTML = h;
-    window.print();
+    return true;
+  }
+
+  $('l-yazdir').addEventListener('click', () => {
+    if (luckyFisHazirla()) window.print();
   });
+
+  // Ctrl+P ile yazdırılsa bile fiş o an açık olan ekrandan hazırlanır;
+  // yazdırma bitince fiş temizlenir (eski müşterinin fişi tekrar çıkmaz).
+  window.addEventListener('beforeprint', () => {
+    if (!$('gorunum-odeme').hidden && window.odemeFisHazirla) window.odemeFisHazirla();
+    else if (!$('gorunum-lucky').hidden) { if (!luckyFisHazirla()) $('fis').innerHTML = ''; }
+    else $('fis').innerHTML = '';
+  });
+  window.addEventListener('afterprint', () => { $('fis').innerHTML = ''; });
 
   // ------------------------------------------------------------------
   // AÇIK / KOYU TEMA

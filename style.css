@@ -663,6 +663,12 @@ select:disabled { opacity: 0.45; cursor: not-allowed; }
    değerini 48mm yap. Sadece siyah-beyaz, ekran stili burada geçmez.
    ===================================================================== */
 
+/* Hatalı yazılmış alan (eksi sayı, harf, aralık dışı) */
+input.hatali, input.hatali:focus {
+  border-color: var(--kirmizi);
+  box-shadow: 0 0 0 3px rgb(var(--kirmizi-rgb) / 0.22);
+}
+
 /* =====================================================================
    AÇIK TEMA
    Varsayılan: bilgisayarın ayarı. Menüdeki düğme ile elle seçilirse
