@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ödeme Hesaplayıcı</title>
-  <meta name="theme-color" content="#14532d">
+  <meta name="theme-color" content="#081a10">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -12,45 +12,58 @@
 </head>
 <body>
   <main class="kart">
-    <header>
-      <h1>Ödeme Hesaplayıcı</h1>
+    <header class="ust">
+      <div class="ust-sol">
+        <img class="logo" src="icons/icon-192.png" alt="" width="40" height="40">
+        <div>
+          <h1>Ödeme Hesaplayıcı</h1>
+          <p class="alt-baslik">Döviz karışık ödeme hesabı</p>
+        </div>
+      </div>
       <span class="marka">SOLİBET</span>
     </header>
 
     <!-- Ödenecek tutar -->
     <label class="odenecek">
-      <span>Ödenecek Tutar (TL)</span>
-      <input id="odenecek" inputmode="decimal" autocomplete="off" placeholder="0">
+      <span class="etiket">Ödenecek Tutar</span>
+      <span class="alan">
+        <input id="odenecek" inputmode="decimal" autocomplete="off" placeholder="0">
+        <span class="birim" aria-hidden="true">₺</span>
+      </span>
     </label>
 
     <!-- Döviz satırları -->
     <div class="tablo">
       <div class="satir baslik">
-        <span>Döviz</span><span>Miktar</span><span>Kur</span><span>TL Karşılığı</span>
+        <span>Döviz</span><span>Miktar</span><span>Kur</span><span>Kalanın Karşılığı</span><span>TL Karşılığı</span>
       </div>
       <div class="satir">
-        <span class="doviz">STG £</span>
+        <span class="doviz">STG <i>£</i></span>
         <input id="miktar-STG" inputmode="decimal" autocomplete="off" placeholder="0">
         <input id="kur-STG" inputmode="decimal" autocomplete="off">
-        <output id="tl-STG">0,00</output>
+        <output id="kalan-STG" class="kalan-doviz">—</output>
+        <output class="tl-deger" id="tl-STG">0,00</output>
       </div>
       <div class="satir">
-        <span class="doviz">USD $</span>
+        <span class="doviz">USD <i>$</i></span>
         <input id="miktar-USD" inputmode="decimal" autocomplete="off" placeholder="0">
         <input id="kur-USD" inputmode="decimal" autocomplete="off">
-        <output id="tl-USD">0,00</output>
+        <output id="kalan-USD" class="kalan-doviz">—</output>
+        <output class="tl-deger" id="tl-USD">0,00</output>
       </div>
       <div class="satir">
-        <span class="doviz">EUR €</span>
+        <span class="doviz">EUR <i>€</i></span>
         <input id="miktar-EUR" inputmode="decimal" autocomplete="off" placeholder="0">
         <input id="kur-EUR" inputmode="decimal" autocomplete="off">
-        <output id="tl-EUR">0,00</output>
+        <output id="kalan-EUR" class="kalan-doviz">—</output>
+        <output class="tl-deger" id="tl-EUR">0,00</output>
       </div>
-      <div class="satir">
-        <span class="doviz">TL ₺</span>
+      <div class="satir satir-tl">
+        <span class="doviz">TL <i>₺</i></span>
         <input id="miktar-TL" inputmode="decimal" autocomplete="off" placeholder="0">
         <span class="kur-yok">—</span>
-        <output id="tl-TL">0,00</output>
+        <span class="kur-yok">—</span>
+        <output class="tl-deger" id="tl-TL">0,00</output>
       </div>
 
       <!-- TL banknot alt bölümü: adet girilirse TL miktarı otomatik dolar -->
@@ -71,7 +84,7 @@
 
     <!-- Sonuçlar -->
     <section class="sonuc">
-      <div class="kutu">
+      <div class="kutu toplam">
         <span>TOPLAM</span>
         <strong id="toplam">0,00</strong>
       </div>
@@ -82,12 +95,14 @@
       </div>
     </section>
 
-    <p class="kalan-doviz" id="kalan-doviz"></p>
-
     <div class="butonlar">
-      <button id="yazdir" type="button" class="yazdir">🖨 Fiş Yazdır</button>
-      <button id="temizle" type="button">Temizle</button>
+      <button id="yazdir" type="button" class="yazdir">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg>
+        Fiş Yazdır
+      </button>
+      <button id="temizle" type="button" class="ikincil">Temizle</button>
     </div>
+    <footer class="imza-alt">NAZIF TANRIOVER</footer>
   </main>
 
   <!-- Termal yazıcı fişi: sadece yazdırırken görünür -->

@@ -142,17 +142,15 @@ if (typeof document !== 'undefined') {
     $('durum').textContent =
       durum === 'tamam' ? 'Tamam' : durum === 'eksik' ? 'Eksik ödeme' : 'Para üstü verilecek';
 
-    // Kalanın döviz karşılıkları
-    if (odenecek === 0 && toplam === 0) {
-      $('kalan-doviz').textContent = '';
-    } else {
-      const parcalar = ['STG', 'USD', 'EUR'].map((d) => {
-        const adet = hesaplaKalanDoviz(kalan, satirlar.find((s) => s.doviz === d).kur);
-        return `<b>${bicimle(adet, 4)}</b> ${d}`;
-      });
-      const onEk = kalan < 0 ? 'Para üstü karşılığı ≈ ' : 'Kalanı tamamlamak için ≈ ';
-      $('kalan-doviz').innerHTML = onEk + parcalar.join(' veya ');
-    }
+    // Kalanın döviz karşılıkları: her döviz satırında, kurun yanında gösterilir.
+    // Para üstü durumunda eksi işaretli çıkar.
+    const bos = odenecek === 0 && toplam === 0;
+    ['STG', 'USD', 'EUR'].forEach((d) => {
+      const adet = hesaplaKalanDoviz(kalan, satirlar.find((s) => s.doviz === d).kur);
+      const alan = $('kalan-' + d);
+      alan.textContent = bos ? '—' : bicimle(adet, 2);
+      alan.dataset.durum = bos ? '' : durum;
+    });
   }
 
   // Açılışta kayıtlı kurları yerleştir
