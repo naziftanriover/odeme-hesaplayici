@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>SOLİBET — Sistemli Kupon Hesaplayıcı</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0c8f5f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SOLİBET">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background:
+        radial-gradient(1100px 500px at 50% -10%, rgba(16,185,129,.10), transparent 60%),
+        radial-gradient(900px 600px at 100% 0%, rgba(216,177,96,.05), transparent 55%),
+        #e8ece9;
+      background-attachment: fixed;
+      color: #1c2a22;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      height: 56px;
+      background: linear-gradient(180deg, #fbfdfb, #f4f7f4);
+      border-bottom: 1px solid #d6ded8;
+      box-shadow: 0 1px 0 rgba(181,138,42,.20), 0 4px 16px rgba(60,80,70,.10);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .solibet-logo {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #0c8f5f;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .solibet-logo .dot {
+      width: 9px; height: 9px;
+      background: linear-gradient(135deg, #f0d99a, #b58a2a);
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 10px rgba(216,177,96,.6);
+    }
+    .topbar-right {
+      font-size: 12px;
+      color: #66786e;
+      letter-spacing: 0.3px;
+    }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      padding: 30px 0 24px;
+      border-bottom: 1px solid #d6ded8;
+      box-shadow: 0 1px 0 rgba(216,177,96,.22);
+      margin-bottom: 28px;
+    }
+    header h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.3px; color: #1c2a22; }
+    header h1 em { font-style: normal; background: linear-gradient(135deg, #10b981, #0c8f5f); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    header p { color: #6f8379; margin-top: 8px; font-size: 14px; }
+    header .dev-credit {
+      margin-top: 10px; font-size: 13px; color: #7c8c82; letter-spacing: 0.3px;
+    }
+    header .dev-credit span { color: #0c8f5f; font-weight: 700; }
+
+    /* ── Section card ── */
+    .card {
+      background: linear-gradient(180deg, #fbfdfb, #f3f7f3);
+      border: 1px solid #d6ded8;
+      border-radius: 16px;
+      padding: 22px 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 2px rgba(60,80,70,.05), 0 8px 22px rgba(60,80,70,.09);
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #22302a;
+      text-transform: uppercase;
+      letter-spacing: 1.4px;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e3e9e4;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-title::before {
+      content: '';
+      width: 4px; height: 16px;
+      background: linear-gradient(180deg, #10b981, #0a7d55);
+      border-radius: 3px;
+      box-shadow: 0 0 8px rgba(16,185,129,.5);
+    }
+
+    /* ── Match table ── */
+    .match-header, .match-row {
+      display: grid;
+      grid-template-columns: 44px 130px 1fr 36px;
+      gap: 8px;
+      align-items: center;
+    }
+    .match-header {
+      font-size: 11px;
+      color: #6f8379;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #d6ded8;
+      margin-bottom: 4px;
+    }
+    .match-row { padding: 7px 0; border-bottom: 1px solid #e3e9e4; }
+    .match-num { font-size: 12px; color: #6f8379; text-align: center; font-weight: 600; }
+
+    /* inputs */
+    input[type="text"], input[type="number"] {
+      background: #f6f9f6;
+      border: 1px solid #d6ded8;
+      border-radius: 8px;
+      color: #1c2a22;
+      padding: 8px 11px;
+      font-size: 13px;
+      width: 100%;
+      transition: border-color .18s;
+    }
+    input[type="text"]:focus, input[type="number"]:focus {
+      outline: none; border-color: #0c8f5f;
+      box-shadow: 0 0 0 3px rgba(16,185,129,.18);
+    }
+    input::placeholder { color: #d6ded8; }
+    .odds-input {
+      font-size: 16px !important;
+      font-weight: 700 !important;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+    .odds-input.invalid { border-color: #d24b4a !important; }
+
+    /* result toggle */
+    .res-wrap { display: flex; gap: 5px; }
+    .res-btn {
+      flex: 1; padding: 7px 0; border-radius: 7px; border: 1px solid #d6ded8;
+      cursor: pointer; font-size: 11px; font-weight: 700; transition: all .18s;
+      background: transparent; color: #66786e; letter-spacing: 0.3px;
+    }
+    .res-btn:hover { border-color: #2f8f66; color: #2f8f66; }
+    .res-btn.win.active  { background: #dcf1e5; border-color: #0c8f5f; color: #0c8f5f; }
+    .res-btn.lose.active { background: #fae2e2; border-color: #d24b4a; color: #d24b4a; }
+
+    .icon-btn {
+      background: transparent; border: none; color: #9aa89f; cursor: pointer;
+      font-size: 20px; line-height: 1; transition: color .18s; padding: 2px;
+    }
+    .icon-btn:hover { color: #d24b4a; }
+
+    .add-row-btn {
+      display: flex; align-items: center; gap: 8px; width: 100%;
+      background: transparent; border: 1px dashed #d6ded8; border-radius: 9px;
+      color: #66786e; padding: 10px 14px; cursor: pointer; font-size: 13px;
+      margin-top: 12px; transition: all .18s;
+    }
+    .add-row-btn:hover { border-color: #0c8f5f; color: #0c8f5f; }
+    .add-row-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .match-count-badge { margin-left: auto; font-size: 12px; }
+
+    /* quick result buttons */
+    .quick-res { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .qr-btn {
+      padding: 5px 12px; border: 1px solid #d6ded8; border-radius: 6px;
+      background: transparent; color: #6f8379; cursor: pointer; font-size: 12px;
+      transition: all .18s;
+    }
+    .qr-btn:hover { border-color: #0c8f5f; color: #0c8f5f; }
+
+    /* ── System grid ── */
+    .sys-quick { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .sys-qbtn {
+      padding: 5px 13px; border: 1px solid #d6ded8; border-radius: 6px;
+      background: transparent; color: #6f8379; cursor: pointer; font-size: 12px;
+      transition: all .18s;
+    }
+    .sys-qbtn:hover { border-color: #0c8f5f; color: #0c8f5f; }
+
+    .sys-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+      gap: 8px;
+    }
+    .sys-chip {
+      position: relative; border: 1px solid #d6ded8; border-radius: 9px;
+      cursor: pointer; padding: 10px 6px; text-align: center;
+      transition: all .18s; user-select: none;
+    }
+    .sys-chip input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .sys-chip .k-label { font-size: 13px; font-weight: 700; color: #4e635a; }
+    .sys-chip .k-sub  { font-size: 10px; color: #66786e; margin-top: 3px; }
+    .sys-chip.sel { background: #dcf1e5; border-color: #0c8f5f; box-shadow: 0 0 0 1px rgba(16,185,129,.4), 0 4px 14px rgba(16,185,129,.18); }
+    .sys-chip.sel .k-label { color: #0c8f5f; }
+    .sys-chip:hover:not(.sel) { border-color: #2f8f66; }
+
+    .combo-info { margin-top: 12px; font-size: 13px; color: #66786e; }
+    .combo-info span { color: #0c8f5f; font-weight: 600; }
+    .combo-warn { color: #b58a2a; }
+
+    /* ── Bet config ── */
+    .bet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .field-label { font-size: 11px; color: #6f8379; margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .radio-row { display: flex; gap: 14px; }
+    .radio-label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; color: #4e635a; }
+    input[type="radio"] { accent-color: #0c8f5f; width: 15px; height: 15px; }
+
+    /* ── Bonus section ── */
+    .bonus-toggle-hdr {
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+    }
+    .bonus-toggle-hdr .arrow { font-size: 11px; color: #66786e; }
+    .bonus-note { font-size: 12px; color: #6f8379; margin-bottom: 14px; line-height: 1.5; }
+    .bonus-note strong { color: #4e635a; }
+
+    .bonus-tbl-wrap { overflow-x: auto; }
+    table.bonus-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table.bonus-tbl th {
+      background: #f6f9f6; padding: 9px 10px; text-align: left;
+      color: #66786e; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px;
+      border-bottom: 1px solid #d6ded8;
+    }
+    table.bonus-tbl td { padding: 7px 10px; border-bottom: 1px solid #e3e9e4; }
+    table.bonus-tbl input { width: 70px; }
+
+    /* ── Calculate button ── */
+    .btn-row { display: flex; gap: 12px; margin-bottom: 24px; }
+    .calc-btn {
+      flex: 1; padding: 16px; border: none; border-radius: 13px;
+      background: linear-gradient(135deg, #0c8f5f, #0a7d55);
+      color: #fff; font-size: 16px; font-weight: 800; cursor: pointer;
+      transition: all .2s; letter-spacing: 0.6px;
+      box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 8px 22px rgba(16,185,129,.28);
+    }
+    .calc-btn:hover {
+      background: linear-gradient(135deg, #0c8f5f, #0f9d6b);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(16,185,129,.35);
+    }
+    .reset-btn {
+      padding: 16px 20px; border: 1px solid #d6ded8; border-radius: 12px;
+      background: transparent; color: #6f8379; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: all .2s; white-space: nowrap;
+    }
+    .reset-btn:hover { border-color: #d24b4a; color: #d24b4a; }
+    .loading-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(236,240,237,.75);
+      z-index: 999; align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+    }
+    .loading-overlay.show { display: flex; }
+    .spinner {
+      width: 48px; height: 48px; border: 4px solid #d6ded8;
+      border-top-color: #0c8f5f; border-radius: 50%; animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-msg { color: #4e635a; font-size: 15px; font-weight: 600; }
+
+    /* ── Results ── */
+    .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .stat-card {
+      background: linear-gradient(180deg, #fafcfa, #f1f5f1); border: 1px solid #d6ded8;
+      border-top: 2px solid rgba(16,185,129,.45); border-radius: 12px;
+      padding: 18px 16px; text-align: center;
+      box-shadow: 0 4px 14px rgba(60,80,70,.10);
+    }
+    .stat-card .lbl { font-size: 10px; color: #66786e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 7px; }
+    .stat-card .val { font-size: 22px; font-weight: 800; }
+    .val.blue   { color: #0c8f5f; }
+    .val.yellow { color: #b58a2a; }
+    .val.green  { color: #0f9d6b; }
+    .val.red    { color: #d24b4a; }
+
+    table.res-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table.res-tbl th {
+      background: #f6f9f6; padding: 10px 12px; text-align: left;
+      color: #66786e; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    table.res-tbl td { padding: 10px 12px; border-bottom: 1px solid #e3e9e4; }
+    table.res-tbl tr:hover td { background: rgba(255,255,255,.02); }
+    table.res-tbl tr.total-row td { font-weight: 800; border-top: 2px solid #d6ded8; }
+
+    .badge {
+      display: inline-block; padding: 2px 9px; border-radius: 20px;
+      font-size: 11px; font-weight: 700;
+    }
+    .badge-win  { background: #dcf1e5; color: #0c8f5f; }
+    .badge-loss { background: #fae2e2; color: #d24b4a; }
+    .badge-bonus { background: #f5ead0; color: #b58a2a; border: 1px solid rgba(216,177,96,.35); }
+    .badge-none { color: #66786e; }
+
+    .info-box {
+      background: #e6f3ea; border: 1px solid #9aa89f; border-radius: 9px;
+      padding: 12px 16px; font-size: 13px; color: #4e635a; margin-top: 12px;
+    }
+    .empty-state { text-align: center; padding: 40px; color: #66786e; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 28px 0 22px;
+      border-top: 1px solid #d6ded8;
+      margin-top: 10px;
+    }
+    footer p { font-size: 13px; color: #7c8c82; }
+    footer span.name { color: #0c8f5f; font-weight: 700; }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .match-header, .match-row { grid-template-columns: 36px 110px 1fr 30px; gap: 5px; }
+      .stat-row { grid-template-columns: 1fr 1fr; }
+      .bet-grid { grid-template-columns: 1fr; }
+      .topbar { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="solibet-logo">
+      <span class="dot"></span>SOLİBET
+    </div>
+    <div class="topbar-right">Sistemli Kupon Hesaplayıcı</div>
+  </div>
+
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <h1>⚽ Sistemli Kupon <em>Hesaplayıcı</em></h1>
+    <p>Düz sistem · Bankosuz · En fazla 20 maç · Bonus dahil ödeme hesabı</p>
+    <p class="dev-credit">✦ <span>Nazif TANRIOVER</span> tarafından geliştirildi ✦</p>
+  </header>
+
+  <!-- ① Maçlar -->
+  <div class="card">
+    <div class="card-title">📋 Maçlar</div>
+    <div class="match-header">
+      <div></div>
+      <div>Oran</div>
+      <div>Sonuç</div>
+      <div></div>
+    </div>
+    <div id="matches-list"></div>
+    <button class="add-row-btn" id="add-match-btn" onclick="addMatch()">
+      <span>＋</span> Maç Ekle
+      <span class="match-count-badge" id="match-count">0 / 20</span>
+    </button>
+    <div class="quick-res">
+      <button class="qr-btn" onclick="setAllResults('win')">✓ Tümü Kazandı</button>
+      <button class="qr-btn" onclick="setAllResults('lose')">✗ Tümü Kaybetti</button>
+      <button class="qr-btn" onclick="setAllResults('none')">↺ Sonuçları Temizle</button>
+    </div>
+  </div>
+
+  <!-- ② Sistem Seçimi -->
+  <div class="card">
+    <div class="card-title">🎯 Sistem Seçimi</div>
+    <div class="sys-quick">
+      <button class="sys-qbtn" onclick="sysSelectAll()">Tümü</button>
+      <button class="sys-qbtn" onclick="sysSelectNone()">Hiçbiri</button>
+      <button class="sys-qbtn" onclick="sysSelectUpperHalf()">Üst Yarı</button>
+      <button class="sys-qbtn" onclick="sysSelectOnly(0)">Sadece N'de N</button>
+      <button class="sys-qbtn" onclick="sysSelectOnly(1)">N'de N-1</button>
+      <button class="sys-qbtn" onclick="sysSelectOnly(2)">N'de N-2</button>
+    </div>
+    <div class="sys-grid" id="sys-grid">
+      <div style="color:#9aa89f;font-size:13px;">Önce maç ekleyin</div>
+    </div>
+    <div class="combo-info" id="combo-info"></div>
+  </div>
+
+  <!-- ③ Bahis -->
+  <div class="card">
+    <div class="card-title">💰 Bahis Yapılandırması</div>
+    <div class="bet-grid">
+      <div>
+        <div class="field-label">Bahis Modu</div>
+        <div class="radio-row">
+          <label class="radio-label">
+            <input type="radio" name="betmode" value="birim" checked onchange="onBetModeChange()">
+            Kombinasyon Başına
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="betmode" value="toplam" onchange="onBetModeChange()">
+            Toplam Yatırım
+          </label>
+        </div>
+      </div>
+      <div>
+        <div class="field-label" id="bet-lbl">Kombinasyon Başına (TL)</div>
+        <input type="number" id="bet-amount" value="10" min="0.01" step="0.01" placeholder="10">
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ Bonus Kuralları -->
+  <div class="card">
+    <div class="card-title bonus-toggle-hdr open" id="bonus-hdr" onclick="toggleBonusSection()">
+      <span>🎁 Bonus Kuralları</span>
+      <span class="arrow">▲</span>
+    </div>
+    <div id="bonus-body">
+      <p class="bonus-note">
+        Bonus, kazanan kombinasyonun <strong>net kârı</strong> üzerine uygulanır.<br>
+        <code style="background:#f6f9f6;padding:2px 6px;border-radius:4px;font-size:11px;">Ödeme = (Brüt − Bahis) × (1 + Bonus%) + Bahis</code>
+      </p>
+      <div class="bonus-tbl-wrap">
+        <table class="bonus-tbl">
+          <thead>
+            <tr>
+              <th>Min. Maç</th>
+              <th>Min. Oran</th>
+              <th>Max. Oran</th>
+              <th>Bonus %</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="bonus-tbody"></tbody>
+        </table>
+      </div>
+      <button class="add-row-btn" style="margin-top:10px;" onclick="addBonusRule()">＋ Kural Ekle</button>
+    </div>
+  </div>
+
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-msg" id="loading-msg">Kombinasyonlar hesaplanıyor…</div>
+  </div>
+
+  <!-- Calculate -->
+  <div class="btn-row">
+    <button class="calc-btn" onclick="calculate()">🔢 HESAPLA</button>
+    <button class="reset-btn" onclick="resetKupon()" title="Kuponu sıfırla">🗑️ Yeni Kupon</button>
+  </div>
+
+  <!-- Results -->
+  <div id="results" style="display:none;">
+    <div class="card">
+      <div class="card-title">📊 Özet</div>
+      <div class="stat-row" id="stat-row"></div>
+      <div id="summary-tbl"></div>
+    </div>
+    <div class="card" id="detail-card">
+      <div class="card-title" id="detail-title">🏆 Kazanan Kombinasyonlar</div>
+      <div id="detail-tbl"></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>⚽ SOLİBET — Sistemli Kupon Hesaplayıcı &nbsp;·&nbsp; <span class="name">Nazif TANRIOVER</span> &nbsp;·&nbsp; © 2026</p>
+  </footer>
+
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════ */
+let matches = [];
+let bonusRules = [
+  { minMac:4, minOran:10.00,  maxOran:25.00,  bonus:0.15 },
+  { minMac:4, minOran:25.00,  maxOran:50.00,  bonus:0.20 },
+  { minMac:4, minOran:50.00,  maxOran:100.00, bonus:0.25 },
+  { minMac:4, minOran:100.00, maxOran:1e12,   bonus:0.41 },
+];
+
+/* ═══════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════ */
+const fmt = (n, d=2) => Number(n).toLocaleString('tr-TR', { minimumFractionDigits:d, maximumFractionDigits:d });
+const fmtInt = n => Math.round(n).toLocaleString('tr-TR');
+
+function parseOdds(str) {
+  if (!str && str !== 0) return NaN;
+  return parseFloat(String(str).replaceAll(',', '.'));
+}
+
+function syncOddsFromDOM() {
+  document.querySelectorAll('.odds-input').forEach(inp => {
+    const id = parseInt(inp.dataset.id);
+    const m = matches.find(m => m.id === id);
+    if (m) m.odds = inp.value;
+  });
+}
+
+function comb(n, k) {
+  if (k < 0 || k > n) return 0;
+  if (k === 0 || k === n) return 1;
+  k = Math.min(k, n-k);
+  let c = 1;
+  for (let i = 0; i < k; i++) c = c * (n-i) / (i+1);
+  return Math.round(c);
+}
+
+function* combGen(n, k) {
+  if (k > n || k < 1) return;
+  const idx = Array.from({length:k}, (_,i) => i);
+  yield idx.slice();
+  while (true) {
+    let i = k - 1;
+    while (i >= 0 && idx[i] === i + n - k) i--;
+    if (i < 0) break;
+    idx[i]++;
+    for (let j = i+1; j < k; j++) idx[j] = idx[j-1] + 1;
+    yield idx.slice();
+  }
+}
+
+function getBonusRate(numMac, odp) {
+  for (const r of bonusRules) {
+    // Geçersiz kural (min > max) atlanır — yanlış/eksik bonus önlenir
+    if (r.minOran > r.maxOran) continue;
+    // Yarı-açık aralık [minOran, maxOran): bitişik bantlar arasında boşluk kalmaz.
+    // Oran çarpımı çok ondalıklı olsa da (ör. 24.995) tam olarak bir banda düşer.
+    if (numMac >= r.minMac && odp >= r.minOran && odp < r.maxOran) return r.bonus;
+  }
+  return 0;
+}
+
+function invalidBonusRules() {
+  return bonusRules.filter(r => r.minOran > r.maxOran);
+}
+
+function payout(odp, unitBet, bonusRate) {
+  const brut = unitBet * odp;
+  const netKar = brut - unitBet;
+  return netKar * (1 + bonusRate) + unitBet;
+}
+
+function selectedSystems() {
+  return [...document.querySelectorAll('.syschk:checked')].map(c => parseInt(c.value)).sort((a,b)=>a-b);
+}
+
+/* ═══════════════════════════════════════════════════
+   MATCHES
+═══════════════════════════════════════════════════ */
+let _uid = 1;
+function hideResults() {
+  const r = document.getElementById('results');
+  if (r) r.style.display = 'none';
+}
+
+function addMatch() {
+  if (matches.length >= 20) return;
+  syncOddsFromDOM();
+  matches.push({ id: _uid++, odds:'', result:'none' });
+  renderMatches();
+  updateSysGrid();
+  hideResults();
+}
+
+function removeMatch(id) {
+  syncOddsFromDOM();
+  matches = matches.filter(m => m.id !== id);
+  renderMatches();
+  updateSysGrid();
+  hideResults();
+}
+
+function setRes(id, r) {
+  const m = matches.find(m => m.id === id);
+  if (!m) return;
+  m.result = r;
+  const row = document.querySelector(`.match-row[data-id="${id}"]`);
+  if (!row) return;
+  row.querySelectorAll('.res-btn').forEach(b => b.classList.remove('active'));
+  if (r !== 'none') {
+    const btn = row.querySelector(`.res-btn.${r}`);
+    if (btn) btn.classList.add('active');
+  }
+}
+
+function setAllResults(r) {
+  matches.forEach(m => m.result = r);
+  document.querySelectorAll('.match-row').forEach(row => {
+    row.querySelectorAll('.res-btn').forEach(b => b.classList.remove('active'));
+    if (r !== 'none') {
+      const btn = row.querySelector(`.res-btn.${r}`);
+      if (btn) btn.classList.add('active');
+    }
+  });
+}
+
+function renderMatches() {
+  document.getElementById('match-count').textContent = `${matches.length} / 20`;
+  document.getElementById('add-match-btn').disabled = matches.length >= 20;
+  const el = document.getElementById('matches-list');
+  if (!matches.length) {
+    el.innerHTML = '<div style="color:#9aa89f;font-size:13px;padding:12px 0;">Henüz maç eklenmedi.</div>';
+    return;
+  }
+  el.innerHTML = matches.map((m, i) => `
+    <div class="match-row" data-id="${m.id}">
+      <div class="match-num">M${i+1}</div>
+      <input type="text" class="odds-input" data-id="${m.id}"
+        placeholder="1.80" value="${escHtml(m.odds)}"
+        autocomplete="off" inputmode="decimal"
+        oninput="validateOddsInput(this)">
+      <div class="res-wrap">
+        <button class="res-btn win ${m.result==='win'?'active':''}"  onclick="setRes(${m.id},'win')">✓ Kazandı</button>
+        <button class="res-btn lose ${m.result==='lose'?'active':''}" onclick="setRes(${m.id},'lose')">✗ Kaybetti</button>
+      </div>
+      <button class="icon-btn" onclick="removeMatch(${m.id})" title="Kaldır">×</button>
+    </div>
+  `).join('');
+}
+
+function validateOddsInput(inp) {
+  const v = parseOdds(inp.value);
+  inp.classList.toggle('invalid', inp.value !== '' && (isNaN(v) || v <= 1.00));
+}
+
+function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ═══════════════════════════════════════════════════
+   SYSTEM GRID
+═══════════════════════════════════════════════════ */
+function updateSysGrid() {
+  const n = matches.length;
+  const prev = selectedSystems();
+  const grid = document.getElementById('sys-grid');
+  if (n < 2) {
+    grid.innerHTML = '<div style="color:#9aa89f;font-size:13px;">En az 2 maç ekleyin</div>';
+    document.getElementById('combo-info').innerHTML = '';
+    return;
+  }
+  grid.innerHTML = Array.from({length:n}, (_,i) => {
+    const k = i+1, c = comb(n,k);
+    const sel = prev.includes(k) || (prev.length===0 && k===n);
+    return `
+      <label class="sys-chip ${sel?'sel':''}" onclick="toggleSysChip(event,this)">
+        <input type="checkbox" class="syschk" value="${k}" ${sel?'checked':''}>
+        <div class="k-label">${n}'de ${k}</div>
+        <div class="k-sub">${fmtInt(c)} komb.</div>
+      </label>`;
+  }).join('');
+  updateComboInfo();
+}
+
+function toggleSysChip(e, label) {
+  e.preventDefault();
+  const cb = label.querySelector('input');
+  cb.checked = !cb.checked;
+  label.classList.toggle('sel', cb.checked);
+  updateComboInfo();
+}
+
+function updateComboInfo() {
+  const n = matches.length;
+  const sel = selectedSystems();
+  const info = document.getElementById('combo-info');
+  if (!sel.length || n < 2) { info.innerHTML=''; return; }
+  const total = sel.reduce((s,k)=>s+comb(n,k),0);
+  const warn = total > 200000 ? '<br><span class="combo-warn">⚠️ Çok fazla kombinasyon — hesaplama biraz uzun sürebilir.</span>' : '';
+  info.innerHTML = `Toplam: <span>${sel.map(k=>`${n}'de ${k}`).join(' + ')}</span> = <span>${fmtInt(total)} kombinasyon</span>${warn}`;
+}
+
+function sysSelectAll()  { document.querySelectorAll('.syschk').forEach(c=>{c.checked=true; c.closest('label').classList.add('sel');}); updateComboInfo(); }
+function sysSelectNone() { document.querySelectorAll('.syschk').forEach(c=>{c.checked=false; c.closest('label').classList.remove('sel');}); updateComboInfo(); }
+function sysSelectUpperHalf() {
+  const n = matches.length, half = Math.ceil(n/2);
+  document.querySelectorAll('.syschk').forEach(c=>{
+    const k=parseInt(c.value), s=k>=half; c.checked=s; c.closest('label').classList.toggle('sel',s);
+  }); updateComboInfo();
+}
+function sysSelectOnly(offset) {
+  const n = matches.length, target = n - offset;
+  document.querySelectorAll('.syschk').forEach(c=>{
+    const k=parseInt(c.value), s=(k===target); c.checked=s; c.closest('label').classList.toggle('sel',s);
+  }); updateComboInfo();
+}
+
+function resetKupon() {
+  if (!confirm('Kuponu sıfırlamak istediğinizden emin misiniz? Tüm maçlar ve sonuçlar silinir.')) return;
+  matches = [];
+  _uid = 1;
+  document.getElementById('results').style.display = 'none';
+  renderMatches();
+  updateSysGrid();
+  addMatch(); addMatch(); addMatch();
+}
+
+/* ═══════════════════════════════════════════════════
+   BET CONFIG
+═══════════════════════════════════════════════════ */
+function onBetModeChange() {
+  const mode = document.querySelector('input[name="betmode"]:checked').value;
+  document.getElementById('bet-lbl').textContent = mode==='toplam' ? 'Toplam Yatırım (TL)' : 'Kombinasyon Başına (TL)';
+}
+
+/* ═══════════════════════════════════════════════════
+   BONUS RULES
+═══════════════════════════════════════════════════ */
+function renderBonusRules() {
+  document.getElementById('bonus-tbody').innerHTML = bonusRules.map((r,i)=>`
+    <tr>
+      <td><input type="number" value="${r.minMac}" min="1" max="20" step="1"
+        oninput="bonusRules[${i}].minMac=Math.max(1,parseInt(this.value)||1)"></td>
+      <td><input type="number" value="${r.minOran}" min="1" step="0.01"
+        oninput="bonusRules[${i}].minOran=parseFloat(this.value)||1"></td>
+      <td><input type="number" value="${r.maxOran>=1e11?'':r.maxOran}" min="1" step="0.01" placeholder="∞"
+        oninput="bonusRules[${i}].maxOran=parseFloat(this.value)||1e12"></td>
+      <td><input type="number" value="${Math.round(r.bonus*100)}" min="0" max="200" step="1"
+        oninput="bonusRules[${i}].bonus=(parseInt(this.value)||0)/100"> %</td>
+      <td><button class="icon-btn" onclick="removeBonusRule(${i})">×</button></td>
+    </tr>
+  `).join('');
+}
+
+function addBonusRule() {
+  bonusRules.push({minMac:4, minOran:10, maxOran:1e12, bonus:0.10});
+  renderBonusRules();
+}
+
+function removeBonusRule(i) {
+  bonusRules.splice(i,1); renderBonusRules();
+}
+
+function toggleBonusSection() {
+  const hdr = document.getElementById('bonus-hdr');
+  const body = document.getElementById('bonus-body');
+  const open = hdr.classList.toggle('open');
+  body.style.display = open ? 'block' : 'none';
+  hdr.querySelector('.arrow').textContent = open ? '▲' : '▼';
+}
+
+/* ═══════════════════════════════════════════════════
+   CALCULATE
+═══════════════════════════════════════════════════ */
+function calculate() {
+  syncOddsFromDOM();
+
+  if (matches.length < 2) { alert('En az 2 maç ekleyin!'); return; }
+  for (let i=0; i<matches.length; i++) {
+    const o = parseOdds(matches[i].odds);
+    if (isNaN(o) || o <= 1.00) { alert(`M${i+1} için geçerli oran girin!\n\nÖrnek: 1.80 veya 1,80`); return; }
+  }
+  const sel = selectedSystems();
+  if (!sel.length) { alert('En az bir sistem boyutu seçin!'); return; }
+  const betInput = parseFloat(String(document.getElementById('bet-amount').value).replace(',','.'));
+  if (!betInput || betInput <= 0) { alert('Geçerli bahis miktarı girin!'); return; }
+  const betMode = document.querySelector('input[name="betmode"]:checked').value;
+
+  // Bonus kurallarında geçersiz aralık (min > max) varsa uyar
+  const bad = invalidBonusRules();
+  if (bad.length) {
+    alert('Bonus kurallarında hatalı aralık var: Min. Oran, Max. Oran\'dan büyük olamaz.\n' +
+          'Bu kurallar hesaba katılmayacak. Lütfen düzeltin.');
+  }
+
+  const n = matches.length;
+  const totalCombs = sel.reduce((s,k)=>s+comb(n,k),0);
+
+  const overlay = document.getElementById('loading-overlay');
+  const heavy = totalCombs > 50000;
+  if (heavy) {
+    document.getElementById('loading-msg').textContent = `${fmtInt(totalCombs)} kombinasyon hesaplanıyor…`;
+    overlay.classList.add('show');
+  }
+  // Overlay'in çizilmesine izin ver, sonra parçalı (asenkron) hesapla — arayüz donmaz
+  requestAnimationFrame(() => {
+    _doCalculate(sel, betInput, betMode, n, totalCombs, heavy)
+      .catch(err => { console.error(err); alert('Hesaplama sırasında bir hata oluştu.'); })
+      .finally(() => overlay.classList.remove('show'));
+  });
+}
+
+async function _doCalculate(sel, betInput, betMode, n, totalCombs, heavy) {
+  const unitBet = betMode==='toplam' ? betInput/totalCombs : betInput;
+  const totalYatirim = betMode==='toplam' ? betInput : unitBet*totalCombs;
+  const hasResults = matches.some(m => m.result !== 'none');
+
+  const byK = {}; sel.forEach(k => { byK[k]={total:0,kazanan:0,odeme:0,yatirim:0}; });
+  let toplamOdeme = 0;
+  const kazananlar = [];
+
+  // Büyük hesaplarda arayüzün donmaması için işi parçalara böl ve periyodik olarak
+  // olay döngüsüne (event loop) kontrolü bırak. Matematik birebir aynı kalır.
+  const CHUNK = 20000;
+  let processed = 0;
+
+  for (const k of sel) {
+    for (const idxs of combGen(n, k)) {
+      byK[k].total++;
+      byK[k].yatirim += unitBet;
+      const odp = idxs.reduce((p,i)=>p*parseOdds(matches[i].odds), 1);
+      const won = hasResults && idxs.every(i => matches[i].result==='win');
+      if (hasResults) {
+        if (won) {
+          const bonusRate = getBonusRate(k, odp);
+          const op = payout(odp, unitBet, bonusRate);
+          byK[k].kazanan++;
+          byK[k].odeme += op;
+          toplamOdeme += op;
+          kazananlar.push({idxs, k, odp, bonusRate, totalOdeme:op});
+        }
+      } else {
+        const bonusRate = getBonusRate(k, odp);
+        byK[k].odeme += payout(odp, unitBet, bonusRate);
+      }
+      if (heavy && ++processed % CHUNK === 0) {
+        document.getElementById('loading-msg').textContent =
+          `${fmtInt(processed)} / ${fmtInt(totalCombs)} kombinasyon hesaplandı…`;
+        await new Promise(r => setTimeout(r));
+      }
+    }
+  }
+
+  const netKar = toplamOdeme - totalYatirim;
+  document.getElementById('stat-row').innerHTML = `
+    <div class="stat-card"><div class="lbl">Toplam Kombinasyon</div><div class="val blue">${fmtInt(totalCombs)}</div></div>
+    <div class="stat-card"><div class="lbl">Toplam Yatırım</div><div class="val yellow">${fmt(totalYatirim)} TL</div></div>
+    <div class="stat-card"><div class="lbl">${hasResults?'Toplam Ödeme':'Maks. Potansiyel'}</div><div class="val green">${fmt(hasResults?toplamOdeme:sel.reduce((s,k)=>s+byK[k].odeme,0))} TL</div></div>
+    <div class="stat-card"><div class="lbl">${hasResults?'Net Kâr/Zarar':'Net Kâr (Maks.)'}</div>
+      <div class="val ${hasResults?(netKar>=0?'green':'red'):'blue'}">${hasResults?(netKar>=0?'+':'')+fmt(netKar)+' TL':'—'}</div></div>
+  `;
+
+  const hdrs = hasResults
+    ? `<th>Komb.</th><th style="text-align:right">Kazanan</th><th style="text-align:right">Yatırım</th><th style="text-align:right">Ödeme</th>`
+    : `<th>Komb.</th><th style="text-align:right">Yatırım</th><th style="text-align:right">Maks. Ödeme</th>`;
+  const rows = sel.map(k => {
+    const s = byK[k];
+    return hasResults
+      ? `<tr><td><strong>${n}'de ${k}</strong></td><td style="text-align:right">${fmtInt(s.total)}</td>
+          <td style="text-align:right"><span class="badge ${s.kazanan>0?'badge-win':'badge-none'}">${s.kazanan}</span></td>
+          <td style="text-align:right">${fmt(s.yatirim)} TL</td><td style="text-align:right;font-weight:700">${fmt(s.odeme)} TL</td></tr>`
+      : `<tr><td><strong>${n}'de ${k}</strong></td><td style="text-align:right">${fmtInt(s.total)}</td>
+          <td style="text-align:right">${fmt(s.yatirim)} TL</td><td style="text-align:right;font-weight:700">${fmt(s.odeme)} TL</td></tr>`;
+  }).join('');
+  const totOdemeDisplay = hasResults ? toplamOdeme : sel.reduce((s,k)=>s+byK[k].odeme,0);
+  const totalRow = hasResults
+    ? `<tr class="total-row"><td>TOPLAM</td><td style="text-align:right">${fmtInt(totalCombs)}</td>
+        <td style="text-align:right">${kazananlar.length}</td>
+        <td style="text-align:right">${fmt(totalYatirim)} TL</td>
+        <td style="text-align:right;color:#0c8f5f">${fmt(toplamOdeme)} TL</td></tr>`
+    : `<tr class="total-row"><td>TOPLAM</td><td style="text-align:right">${fmtInt(totalCombs)}</td>
+        <td style="text-align:right">${fmt(totalYatirim)} TL</td>
+        <td style="text-align:right;color:#0c8f5f">${fmt(totOdemeDisplay)} TL</td></tr>`;
+
+  document.getElementById('summary-tbl').innerHTML = `
+    <table class="res-tbl" style="margin-top:16px">
+      <thead><tr><th>Sistem</th>${hdrs}</tr></thead>
+      <tbody>${rows}${totalRow}</tbody>
+    </table>`;
+
+  const detTitle = document.getElementById('detail-title');
+  const detTbl = document.getElementById('detail-tbl');
+
+  if (!hasResults) {
+    detTitle.textContent = 'ℹ️ Senaryo Modu';
+    detTbl.innerHTML = `<div class="info-box">Maç sonuçları girilmediği için <strong>senaryo analizi</strong> gösterildi. Kazanan/kaybeden belirlemek için maç sonuçlarını işaretleyin.</div>`;
+  } else if (kazananlar.length === 0) {
+    detTitle.textContent = '❌ Kazanan Kombinasyon Yok';
+    detTbl.innerHTML = `<div class="empty-state">😔 Hiç kazanan kombinasyon bulunamadı.</div>`;
+  } else {
+    const sorted = [...kazananlar].sort((a,b)=>b.totalOdeme-a.totalOdeme);
+    const show = Math.min(sorted.length, 100);
+    detTitle.textContent = `🏆 Kazanan Kombinasyonlar — ${kazananlar.length} adet`;
+    detTbl.innerHTML = `
+      <table class="res-tbl">
+        <thead><tr><th>#</th><th>Sistem</th><th>Maçlar</th><th style="text-align:right">Oran Çarpımı</th><th style="text-align:right">Bonus</th><th style="text-align:right">Ödeme</th></tr></thead>
+        <tbody>
+          ${sorted.slice(0,show).map((item,i)=>{
+            const macNames = item.idxs.map(idx => `M${idx+1}`).join(' · ');
+            return `<tr>
+              <td style="color:#9aa89f;font-size:12px">${i+1}</td>
+              <td><strong>${n}'de ${item.k}</strong></td>
+              <td style="font-size:12px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${macNames}</td>
+              <td style="text-align:right;font-family:monospace">${fmt(item.odp)}</td>
+              <td style="text-align:right">${item.bonusRate>0?`<span class="badge badge-bonus">%${Math.round(item.bonusRate*100)}</span>`:'<span class="badge-none">—</span>'}</td>
+              <td style="text-align:right;font-weight:800;color:#0c8f5f">${fmt(item.totalOdeme)} TL</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+      ${kazananlar.length>show?`<div class="info-box">İlk ${show} kazanan gösteriliyor. Toplam <strong>${kazananlar.length}</strong> kazanan kombinasyon var.</div>`:''}
+    `;
+  }
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({behavior:'smooth'});
+}
+
+/* ═══════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════ */
+renderBonusRules();
+addMatch(); addMatch(); addMatch();
+
+/* ── Service Worker kaydı ── */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    /* Ana uygulamanın içinde çalışıyor; önbelleği ana sw.js yönetir. */
+  });
+}
+</script>
+</body>
+</html>

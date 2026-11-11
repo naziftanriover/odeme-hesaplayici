@@ -426,6 +426,211 @@ button:focus-visible { outline: 2px solid var(--vurgu); outline-offset: 3px; }
 }
 
 /* =====================================================================
+   SAYFA DÜZENİ: solda menü, ortada seçilen program
+   ===================================================================== */
+body { justify-content: flex-start; align-items: stretch; padding: 0; }
+[hidden] { display: none !important; }
+
+.menu {
+  width: 248px;
+  flex: none;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 18px 12px 16px;
+  background: rgb(4 14 8 / 0.75);
+  border-right: 1px solid var(--cizgi);
+}
+.menu-ust {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px 16px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--cizgi);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--vurgu);
+  line-height: 1.15;
+}
+.menu-ust img { border-radius: 8px; }
+.menu-ust small { font-weight: 600; letter-spacing: 0.02em; color: var(--soluk); font-size: 0.75rem; }
+.menu-baslik {
+  margin: 14px 8px 4px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--soluk);
+}
+.menu a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--yazi-2);
+  text-decoration: none;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  transition: background-color 0.15s, color 0.15s;
+}
+.menu a small {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--soluk);
+  background: rgb(255 255 255 / 0.04);
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+}
+.menu a:hover { background: rgb(255 255 255 / 0.04); color: var(--yazi); }
+.menu a:focus-visible { outline: 2px solid var(--vurgu); outline-offset: 1px; }
+.menu a.aktif {
+  color: var(--yazi);
+  background: rgb(74 222 128 / 0.10);
+  border-color: rgb(74 222 128 / 0.28);
+  box-shadow: inset 3px 0 0 var(--vurgu);
+}
+.menu a.aktif small { color: #052e16; background: var(--vurgu); }
+.menu .imza-alt { margin-top: auto; padding: 18px 8px 0; }
+
+.icerik > .kart { min-width: 0; }
+.icerik {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 24px 20px;
+}
+
+/* ---------- Seçim kutuları (select) ---------- */
+select {
+  width: 100%;
+  min-width: 0;
+  height: 46px;
+  background: var(--alan-bg);
+  color: var(--yazi);
+  border: 1px solid var(--cizgi-guclu);
+  border-radius: 10px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+select:hover { border-color: #3b6a4d; }
+select:focus { outline: none; border-color: var(--vurgu); box-shadow: 0 0 0 3px rgb(74 222 128 / 0.22); }
+select:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ---------- Lucky / Yankee ekranı ---------- */
+.l-ayarlar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.l-ayarlar .etiket { display: block; margin-bottom: 6px; }
+.l-satir {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1.3fr) minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 0.9fr);
+  gap: 10px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--cizgi);
+}
+.l-satir.baslik { padding: 12px 0 10px; }
+.l-satir.baslik span { text-align: left !important; }
+.l-no {
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  border-radius: 8px;
+  font-weight: 800;
+  background: rgb(255 255 255 / 0.05);
+  color: var(--yazi-2);
+}
+.l-satir .l-oran { text-align: left; }
+/* Sonuca göre satır işareti */
+.l-satir[data-sonuc="won"] .l-no { background: rgb(74 222 128 / 0.18); color: var(--yesil); }
+.l-satir[data-sonuc="placed"] .l-no { background: rgb(96 165 250 / 0.18); color: var(--mavi); }
+.l-satir[data-sonuc="lost"] .l-no { background: rgb(248 113 113 / 0.15); color: var(--kirmizi); }
+.l-satir[data-sonuc="void"] .l-no { background: rgb(255 255 255 / 0.08); color: var(--soluk); }
+.l-satir[data-sonuc="lost"] .l-oran,
+.l-satir[data-sonuc="void"] .l-oran { color: var(--soluk); }
+
+.l-tablo .banknot { margin-top: 12px; }
+.l-bonus { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.l-bonus label span { display: block; font-size: 0.75rem; color: var(--soluk); margin-bottom: 4px; }
+.l-hata { min-height: 1.3em; margin: 12px 2px 0; color: var(--kirmizi); font-weight: 600; font-size: 0.9375rem; }
+.kutu em.l-not { background: none; color: var(--soluk); padding: 0; font-weight: 600; }
+
+.l-detay {
+  background: var(--yuzey-2);
+  border: 1px solid var(--cizgi);
+  border-radius: 12px;
+  padding: 4px 14px;
+  margin-bottom: 16px;
+}
+.l-detay:empty { display: none; }
+.l-grup {
+  display: grid;
+  grid-template-columns: 1.4fr 0.6fr 1fr;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--cizgi);
+  font-variant-numeric: tabular-nums;
+}
+.l-detay.ew .l-grup { grid-template-columns: 1.4fr 0.6fr 1fr 1fr; }
+.l-grup:last-child { border-bottom: none; }
+.l-grup span:nth-child(n+2) { text-align: right; }
+.l-grup.baslik { font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--soluk); font-weight: 700; }
+.l-bonus-satir { color: var(--vurgu); font-weight: 700; }
+
+/* ---------- Sistemli kupon çerçevesi ---------- */
+.gorunum-genis { max-width: 1100px; padding: 0; overflow: hidden; }
+#sistemli-cerceve { width: 100%; height: calc(100vh - 50px); border: 0; display: block; background: var(--zemin); }
+
+/* Dar ekran: menü üstte yatay şerit olur */
+@media (max-width: 900px) {
+  body { flex-direction: column; }
+  .menu {
+    width: auto;
+    height: auto;
+    z-index: 5;
+    flex-direction: row;
+    align-items: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 8px 10px;
+    border-right: 0;
+    border-bottom: 1px solid var(--cizgi);
+    background: rgb(4 14 8 / 0.95);
+    scrollbar-width: none;
+  }
+  .menu::-webkit-scrollbar { display: none; }
+  .menu-ust, .menu-baslik, .menu .imza-alt { display: none; }
+  #menu-bahisler { display: contents; }
+  .menu a { flex: none; white-space: nowrap; padding: 7px 10px; }
+  .icerik { padding: 16px 12px; }
+  #sistemli-cerceve { height: calc(100vh - 90px); }
+}
+@media (max-width: 520px) {
+  .l-satir { grid-template-columns: 30px minmax(0, 1fr) minmax(0, 1fr); gap: 6px 8px; }
+  .l-ayarlar { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .l-ayarlar label:first-child { grid-column: span 2; }
+  .l-satir > :nth-child(4) { grid-column: 2; }
+  .l-satir > :nth-child(5) { grid-column: 3; }
+  .l-bonus { grid-template-columns: 1fr; }
+}
+
+/* =====================================================================
    TERMAL FİŞ (80 mm bahis yazıcısı). 58 mm yazıcı için --fis-genislik
    değerini 48mm yap. Sadece siyah-beyaz, ekran stili burada geçmez.
    ===================================================================== */
@@ -439,7 +644,8 @@ button:focus-visible { outline: 2px solid var(--vurgu); outline-offset: 3px; }
     padding: 0;
     min-height: 0;
   }
-  .kart, .imza-alt { display: none !important; }
+  .kart, .imza-alt, .menu { display: none !important; }
+  .icerik { display: block; padding: 0; }
   #fis {
     display: block;
     width: var(--fis-genislik);

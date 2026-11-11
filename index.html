@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Ödeme Hesaplayıcı</title>
+  <title>SOLİBET Kasa Araçları</title>
   <meta name="theme-color" content="#081a10">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/icon-192.png">
@@ -11,7 +11,27 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="kart">
+  <!-- SOL MENÜ: tıklanan program ortada açılır -->
+  <nav class="menu" aria-label="Programlar">
+    <div class="menu-ust">
+      <img src="icons/icon-192.png" alt="" width="32" height="32">
+      <span>SOLİBET<br><small>Kasa Araçları</small></span>
+    </div>
+
+    <p class="menu-baslik">Ödeme</p>
+    <a href="#odeme" data-gorunum="odeme">Ödeme Hesaplayıcı</a>
+
+    <!-- Bahis türleri menu.js tarafından lucky.js listesinden eklenir -->
+    <div id="menu-bahisler"></div>
+
+    <p class="menu-baslik">Sistemli</p>
+    <a href="#sistemli" data-gorunum="sistemli">Sistemli Kupon Hesaplama</a>
+
+    <footer class="imza-alt">NAZIF TANRIOVER</footer>
+  </nav>
+
+  <div class="icerik">
+  <main class="kart gorunum" id="gorunum-odeme">
     <header class="ust">
       <div class="ust-sol">
         <img class="logo" src="icons/icon-192.png" alt="" width="40" height="40">
@@ -102,12 +122,92 @@
       </button>
       <button id="temizle" type="button" class="ikincil">Temizle</button>
     </div>
-    <footer class="imza-alt">NAZIF TANRIOVER</footer>
   </main>
+
+  <!-- LUCKY / YANKEE HESAPLAYICI: menüden seçilen türe göre kurulur (menu.js) -->
+  <section class="kart gorunum" id="gorunum-lucky" hidden>
+    <header class="ust">
+      <div class="ust-sol">
+        <img class="logo" src="icons/icon-192.png" alt="" width="40" height="40">
+        <div>
+          <h1 id="l-baslik">Lucky 15</h1>
+          <p class="alt-baslik" id="l-aciklama"></p>
+        </div>
+      </div>
+      <span class="marka">SOLİBET</span>
+    </header>
+
+    <div class="l-ayarlar">
+      <label><span class="etiket">Satır başı bahis</span>
+        <input id="l-birim" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+      <label><span class="etiket">Each-Way</span>
+        <select id="l-ew">
+          <option value="">Hayır (sadece Win)</option>
+          <option value="winToWin">Evet — Win to Win</option>
+          <option value="equallyDivided">Evet — Eşit bölünmüş</option>
+        </select></label>
+      <label><span class="etiket">Plase kesri</span>
+        <select id="l-plase">
+          <option value="1/4">1/4</option>
+          <option value="1/5">1/5</option>
+          <option value="1/3">1/3</option>
+          <option value="1/6">1/6</option>
+          <option value="1/2">1/2</option>
+        </select></label>
+    </div>
+
+    <div class="tablo l-tablo">
+      <div class="l-satir baslik">
+        <span>#</span><span>Oran</span><span>Sonuç</span><span>Rule 4 (p)</span><span>Dead Heat</span>
+      </div>
+      <div id="l-secimler"></div>
+      <details class="banknot" id="l-bonus-bolum">
+        <summary>Bonus (isteğe bağlı)</summary>
+        <div class="l-bonus">
+          <label><span>Hepsi kazanırsa bonus %</span><input id="l-bonus-yuzde" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+          <label id="l-carpan-alan"><span>Tek kazanan oran çarpanı</span><input id="l-bonus-carpan" inputmode="decimal" autocomplete="off" placeholder="1"></label>
+        </div>
+      </details>
+      <p class="ipucu">Oran kesirli (5/2), EVS ya da ondalık (3,5) yazılabilir. NR = at koşmadı, bahis iade.</p>
+    </div>
+
+    <p class="l-hata" id="l-hata" role="alert"></p>
+
+    <section class="sonuc">
+      <div class="kutu toplam">
+        <span>TOPLAM BAHİS</span>
+        <strong id="l-toplam-bahis">0,00</strong>
+        <em class="l-not" id="l-satir-notu"></em>
+      </div>
+      <div class="kutu kalan tamam" id="l-odeme-kutu">
+        <span>ÖDEME</span>
+        <strong id="l-getiri">0,00</strong>
+        <em id="l-kar">—</em>
+      </div>
+    </section>
+
+    <div class="l-detay" id="l-detay"></div>
+
+    <div class="butonlar">
+      <button id="l-yazdir" type="button" class="yazdir">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg>
+        Fiş Yazdır
+      </button>
+      <button id="l-temizle" type="button" class="ikincil">Temizle</button>
+    </div>
+  </section>
+
+  <!-- SİSTEMLİ KUPON: ayrı program, olduğu gibi içeri alındı -->
+  <section class="kart gorunum gorunum-genis" id="gorunum-sistemli" hidden>
+    <iframe id="sistemli-cerceve" title="Sistemli Kupon Hesaplama" data-src="sistemli/index.html"></iframe>
+  </section>
+  </div>
 
   <!-- Termal yazıcı fişi: sadece yazdırırken görünür -->
   <div id="fis" aria-hidden="true"></div>
 
   <script src="app.js"></script>
+  <script src="lucky.js"></script>
+  <script src="menu.js"></script>
 </body>
 </html>

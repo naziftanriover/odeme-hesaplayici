@@ -182,7 +182,7 @@ if (typeof document !== 'undefined') {
   }
 
   // Her tuşta anlık hesapla
-  document.querySelectorAll('input').forEach((el) => {
+  document.querySelectorAll('#gorunum-odeme input').forEach((el) => {
     el.addEventListener('input', () => {
       if (el.id.startsWith('kur-')) kurlariKaydet();
       if (el.dataset.kupur || el.id === 'coins') banknottanTlYaz();

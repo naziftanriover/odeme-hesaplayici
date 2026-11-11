@@ -1,9 +1,10 @@
 // Service worker: dosyaları önbelleğe alır, internet yokken de açılır.
 // Kodu değiştirince SURUM numarasını artır ki kasiyerlerde yenisi yüklensin.
-const SURUM = 'odeme-v3';
+const SURUM = 'odeme-v4';
 const DOSYALAR = [
   './', 'index.html', 'style.css', 'app.js', 'manifest.json',
   'icons/icon-192.png', 'icons/icon-512.png',
+  'lucky.js', 'menu.js', 'sistemli/index.html', 'sistemli/icon-192.png',
 ];
 
 self.addEventListener('install', (e) => {
