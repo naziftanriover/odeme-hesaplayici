@@ -67,7 +67,7 @@
     $('l-ipucu').textContent = (kesirli
       ? 'Kesirli: 5/2, 11/4, EVS yaz. Düz sayı ondalık sayılır (5 = 4/1).'
       : 'Ondalık: 3,50 veya 3.50 yaz (nokta-virgül fark etmez). 5/2 ve EVS de olur.')
-      + ' NR = at koşmadı, bahis iade.';
+      + ' Fiyatı boş at kaybetti sayılır. NR = at koşmadı, bahis iade.';
   }
   $('l-oran-tipi').addEventListener('change', () => {
     try { localStorage.setItem('odeme-oran-tipi', oranTipi()); } catch (e) {}
@@ -140,15 +140,18 @@
     const r4Hatalari = [];   // Rule 4 0-90 dışında veya hatalı yazılmış satırlar
     const secimler = satirlar.map((s, i) => {
       const oran = oranCevir(s.oran);
-      const oynadi = s.sonuc === 'won' || s.sonuc === 'placed';
-      if (oynadi && !(oran > 1)) hatalar.push(i + 1);
+      // Fiyatı boş bırakılan at kaybetti sayılır (NR seçildiyse NR kalır)
+      const bos = s.oran.trim() === '';
+      const sonuc = bos && s.sonuc !== 'void' ? 'lost' : s.sonuc;
+      const oynadi = sonuc === 'won' || sonuc === 'placed';
+      if (oynadi && !(oran > 1)) hatalar.push(i + 1); // yazılmış ama hatalı fiyat
       const r4 = sayiyaCevir(s.r4);
       if (!sayiGecerliMi(s.r4) || r4 > 90) r4Hatalari.push(i + 1);
       return {
         oran: oran > 1 ? oran : 2, // kaybeden/NR atın oranı hesabı etkilemez
         oranMetin: oran > 1 ? s.oran : undefined, // motor tam kesirle hesaplasın (4/6 gibi)
         oranGecerli: oran > 1,
-        sonuc: s.sonuc,
+        sonuc,
         rule4: Math.min(r4, 90),
         dhKazan: oynadi ? (Number(s.dh) || 1) : 1, // dead heat sadece kazanan/plase atta
       };
@@ -171,7 +174,9 @@
     if (!aktifTur) return;
     // Satırları sonuca göre renklendir
     document.querySelectorAll('#l-secimler .l-satir').forEach((s) => {
-      s.dataset.sonuc = s.querySelector('.l-sonuc').value;
+      const secilen = s.querySelector('.l-sonuc').value;
+      const bos = s.querySelector('.l-oran').value.trim() === '';
+      s.dataset.sonuc = bos && secilen !== 'void' ? 'lost' : secilen;
     });
     $('l-plase').disabled = !$('l-ew').value;
     $('l-bonus-ozet').textContent = $('l-ew').value === 'equallyDivided'
@@ -275,7 +280,7 @@
       const oranYazi = !sec.oranGecerli ? '—'
         : oranTipi() === 'kesirli' ? `${kesirHali} (${tl(sec.oran)})`
         : `${tl(sec.oran)} (${kesirHali})`;
-      h += s(`${i + 1}. ${oranYazi}`, sonucAdi[sat.sonuc]);
+      h += s(`${i + 1}. ${oranYazi}`, sonucAdi[sec.sonuc]);
       const ek = [];
       if (sec.rule4) ek.push(`Rule 4: ${sec.rule4}p`);
       if (sec.dhKazan > 1) ek.push(`DH: ${sec.dhKazan} at`);
