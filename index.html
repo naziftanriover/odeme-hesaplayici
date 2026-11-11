@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ödeme Hesaplayıcı</title>
+  <meta name="theme-color" content="#14532d">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="kart">
+    <header>
+      <h1>Ödeme Hesaplayıcı</h1>
+      <span class="marka">SOLİBET</span>
+    </header>
+
+    <!-- Ödenecek tutar -->
+    <label class="odenecek">
+      <span>Ödenecek Tutar (TL)</span>
+      <input id="odenecek" inputmode="decimal" autocomplete="off" placeholder="0">
+    </label>
+
+    <!-- Döviz satırları -->
+    <div class="tablo">
+      <div class="satir baslik">
+        <span>Döviz</span><span>Miktar</span><span>Kur</span><span>TL Karşılığı</span>
+      </div>
+      <div class="satir">
+        <span class="doviz">STG £</span>
+        <input id="miktar-STG" inputmode="decimal" autocomplete="off" placeholder="0">
+        <input id="kur-STG" inputmode="decimal" autocomplete="off">
+        <output id="tl-STG">0,00</output>
+      </div>
+      <div class="satir">
+        <span class="doviz">USD $</span>
+        <input id="miktar-USD" inputmode="decimal" autocomplete="off" placeholder="0">
+        <input id="kur-USD" inputmode="decimal" autocomplete="off">
+        <output id="tl-USD">0,00</output>
+      </div>
+      <div class="satir">
+        <span class="doviz">EUR €</span>
+        <input id="miktar-EUR" inputmode="decimal" autocomplete="off" placeholder="0">
+        <input id="kur-EUR" inputmode="decimal" autocomplete="off">
+        <output id="tl-EUR">0,00</output>
+      </div>
+      <div class="satir">
+        <span class="doviz">TL ₺</span>
+        <input id="miktar-TL" inputmode="decimal" autocomplete="off" placeholder="0">
+        <span class="kur-yok">—</span>
+        <output id="tl-TL">0,00</output>
+      </div>
+    </div>
+
+    <!-- Sonuçlar -->
+    <section class="sonuc">
+      <div class="kutu">
+        <span>TOPLAM</span>
+        <strong id="toplam">0,00</strong>
+      </div>
+      <div class="kutu kalan" id="kalan-kutu">
+        <span>KALAN</span>
+        <strong id="kalan">0,00</strong>
+        <em id="durum">—</em>
+      </div>
+    </section>
+
+    <p class="kalan-doviz" id="kalan-doviz"></p>
+
+    <button id="temizle" type="button">Temizle</button>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
