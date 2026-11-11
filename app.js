@@ -18,29 +18,29 @@ const TAMAM_SINIRI = 1;
 // SAF HESAP FONKSİYONLARI (ekranla ilgisi yok, kolayca değiştirilebilir)
 // ---------------------------------------------------------------------
 
-// Yazılan metni sayıya çevirir. Hem virgül hem nokta kabul eder:
-// "1392" → 1392, "66,8" → 66.8, "1.234,56" → 1234.56, "66.8" → 66.8
+// Yazılan metni sayıya çevirir. Nokta da virgül de ondalık sayılır:
+// "1392" → 1392, "66,8" → 66.8, "66.8" → 66.8, "1.234,56" → 1234.56
 function sayiyaCevir(metin) {
   if (metin == null) return 0;
   let s = String(metin).trim().replace(/\s/g, '');
   if (s === '') return 0;
 
+  // Nokta ve virgül aynı işi görür: tek ayraç varsa ondalıktır.
+  //   "66.8" = "66,8" = 66,8    |   "50.125" = "50,125" = 50,125
+  // Aynı ayraç birden çok kez geçerse binliktir: "1.234.567" → 1234567
+  // İkisi birden varsa sondaki ondalık, diğeri binliktir: "1.234,56" / "1,234.56"
   const virgul = s.lastIndexOf(',');
   const nokta = s.lastIndexOf('.');
+  const ayracSayisi = (s.match(/[.,]/g) || []).length;
 
   if (virgul > -1 && nokta > -1) {
-    // İkisi de varsa: en sondaki ayraç ondalıktır, diğeri binliktir.
-    if (virgul > nokta) s = s.replace(/\./g, '').replace(',', '.');
-    else s = s.replace(/,/g, '');
-  } else if (virgul > -1) {
-    // Sadece virgül: Türkçe ondalık ayracı
-    s = s.replace(/\./g, '').replace(',', '.');
-  } else if (nokta > -1) {
-    // Sadece nokta: birden fazlaysa veya ardından tam 3 rakam geliyorsa
-    // binlik ayracıdır ("200.000"), değilse ondalıktır ("66.8").
-    const parcalar = s.split('.');
-    const binlikMi = parcalar.length > 2 || parcalar[1].length === 3;
-    if (binlikMi) s = s.replace(/\./g, '');
+    const ondalik = virgul > nokta ? ',' : '.';
+    const binlik = ondalik === ',' ? /\./g : /,/g;
+    s = s.replace(binlik, '').replace(ondalik, '.');
+  } else if (ayracSayisi > 1) {
+    s = s.replace(/[.,]/g, '');
+  } else {
+    s = s.replace(',', '.');
   }
 
   const sayi = Number(s);

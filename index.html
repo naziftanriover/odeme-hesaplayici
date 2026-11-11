@@ -148,6 +148,11 @@
     </header>
 
     <div class="l-ayarlar">
+      <label><span class="etiket">Oran tipi</span>
+        <select id="l-oran-tipi">
+          <option value="kesirli">Kesirli (5/2)</option>
+          <option value="ondalik">Ondalık (3,50)</option>
+        </select></label>
       <label><span class="etiket">Satır başı bahis</span>
         <input id="l-birim" inputmode="decimal" autocomplete="off" placeholder="0"></label>
       <label><span class="etiket">Each-Way</span>
@@ -178,7 +183,7 @@
           <label id="l-carpan-alan"><span>Tek kazanan oran çarpanı</span><input id="l-bonus-carpan" inputmode="decimal" autocomplete="off" placeholder="1"></label>
         </div>
       </details>
-      <p class="ipucu">Oran kesirli (5/2), EVS ya da ondalık (3,5) yazılabilir. NR = at koşmadı, bahis iade.</p>
+      <p class="ipucu" id="l-ipucu"></p>
     </div>
 
     <p class="l-hata" id="l-hata" role="alert"></p>

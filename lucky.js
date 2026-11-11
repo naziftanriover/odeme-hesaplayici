@@ -104,10 +104,12 @@ const LUCKY_AILELER = [
 const AKUMULATOR_EN_AZ = 2;
 const AKUMULATOR_EN_COK = 20;
 
-// Oran metnini ondalık orana çevirir:
-//   "5/2" → 3.5   |   "EVS" → 2   |   "3,5" veya "3.5" → 3.5
-// Geçersizse NaN döner.
-function oranCevir(metin) {
+// Oran metnini ondalık orana çevirir. tip: 'kesirli' veya 'ondalik'.
+//   Her iki tipte: "5/2" → 3.5, "EVS" → 2
+//   Kesirli tipte düz sayı x/1 sayılır: "5" → 6, "2,5" → 3.5
+//   Ondalık tipte düz sayı olduğu gibi: "3,5" veya "3.5" → 3.5
+// Nokta ve virgül fark etmez. Geçersizse NaN döner.
+function oranCevir(metin, tip = 'ondalik') {
   if (metin == null) return NaN;
   const s = String(metin).trim().toUpperCase().replace(/\s/g, '');
   if (s === '') return NaN;
@@ -118,7 +120,9 @@ function oranCevir(metin) {
     const payda = Number(kesir[2].replace(',', '.'));
     return payda > 0 && pay > 0 ? pay / payda + 1 : NaN;
   }
+  if (!/^\d+(?:[.,]\d+)?$/.test(s)) return NaN;
   const d = Number(s.replace(',', '.'));
+  if (tip === 'kesirli') return d > 0 ? d + 1 : NaN;
   return d > 1 ? d : NaN;
 }
 
