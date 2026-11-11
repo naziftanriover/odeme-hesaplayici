@@ -176,11 +176,12 @@
         <span>#</span><span>Oran</span><span>Sonuç</span><span>Rule 4 (p)</span><span>Dead Heat</span>
       </div>
       <div id="l-secimler"></div>
+      <!-- SOLİBET Lucky kuralları (sadece Patent, Lucky 15/31/63): değerler değiştirilebilir -->
       <details class="banknot" id="l-bonus-bolum">
-        <summary>Bonus (isteğe bağlı)</summary>
+        <summary>SOLİBET bonusu <span id="l-bonus-ozet"></span></summary>
         <div class="l-bonus">
-          <label><span>Hepsi kazanırsa bonus %</span><input id="l-bonus-yuzde" inputmode="decimal" autocomplete="off" placeholder="0"></label>
-          <label id="l-carpan-alan"><span>Tek kazanan oran çarpanı</span><input id="l-bonus-carpan" inputmode="decimal" autocomplete="off" placeholder="1"></label>
+          <label id="l-carpan-alan"><span>Tek kazanan: fiyat × çarpan + 1</span><input id="l-bonus-carpan" inputmode="decimal" autocomplete="off" value="2"></label>
+          <label><span>Hepsi kazanırsa (NR yoksa) bonus %</span><input id="l-bonus-yuzde" inputmode="decimal" autocomplete="off" value="10"></label>
         </div>
       </details>
       <p class="ipucu" id="l-ipucu"></p>

@@ -123,8 +123,9 @@
       html += satirHtml(i, kayit[i] || { oran: '', sonuc: 'won', r4: '', dh: 1 });
     }
     $('l-secimler').innerHTML = html;
-    // Tek kazanan bonusu sadece teklisi olan türlerde (Patent, Lucky) anlamlı
-    $('l-carpan-alan').hidden = !t.tekli;
+    // SOLİBET bonusları sadece teklisi olan türlerde (Patent, Lucky 15/31/63) var;
+    // Trixie, Yankee, Canadian, Heinz, Super Heinz, Goliath'ta bonus yok.
+    $('l-bonus-bolum').hidden = !t.tekli;
     luckyGuncelle();
   }
 
@@ -157,7 +158,7 @@
         tur: aktifTur, secimler, birimBahis: birim,
         ew: Boolean(ewMod), ewMod: ewMod || 'winToWin',
         plaseKesri: { pay, payda },
-        bonusHepsiYuzde: sayiyaCevir($('l-bonus-yuzde').value),
+        bonusHepsiYuzde: t.tekli ? sayiyaCevir($('l-bonus-yuzde').value) : 0,
         bonusTekKazanCarpan: t.tekli ? sayiyaCevir($('l-bonus-carpan').value) : 0,
       },
     };
@@ -172,6 +173,8 @@
       s.dataset.sonuc = s.querySelector('.l-sonuc').value;
     });
     $('l-plase').disabled = !$('l-ew').value;
+    $('l-bonus-ozet').textContent =
+      `tek kazanan ×${$('l-bonus-carpan').value || '1'} +1 · hepsi kazanırsa %${$('l-bonus-yuzde').value || '0'}`;
 
     const { hatalar, r4Hatalari, birim, birimGecerli, girdi } = luckyGirdi();
     const satir = satirSayisi(aktifTur) * (girdi.ew ? 2 : 1);
@@ -227,8 +230,9 @@
     const kod = aktifTur;
     aktifTur = null;
     $('l-birim').value = '';
-    $('l-bonus-yuzde').value = '';
-    $('l-bonus-carpan').value = '';
+    // SOLİBET varsayılanlarına dön
+    $('l-bonus-yuzde').value = '10';
+    $('l-bonus-carpan').value = '2';
     luckyKur(kod);
     $('l-birim').focus();
   });
