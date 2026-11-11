@@ -74,6 +74,14 @@ function kalanDurumu(kalan) {
   return kalan > 0 ? 'eksik' : 'fazla';
 }
 
+// TL banknotlarının toplamı = Σ (küpür × adet) + bozuk para (coins) tutarı
+// adetler: { 200: 3, 100: 1, ... }, coins: TL tutarı
+function hesaplaBanknotToplam(adetler, coins) {
+  let toplam = 0;
+  for (const kupur in adetler) toplam += Number(kupur) * (adetler[kupur] || 0);
+  return toplam + (coins || 0);
+}
+
 // Sayıyı Türkçe biçimde yazar: 199999.6 → "199.999,60"
 function bicimle(sayi, ondalik = 2) {
   return new Intl.NumberFormat('tr-TR', {
@@ -86,7 +94,7 @@ function bicimle(sayi, ondalik = 2) {
 if (typeof module !== 'undefined') {
   module.exports = {
     sayiyaCevir, hesaplaTlKarsiligi, hesaplaToplam, hesaplaKalan,
-    hesaplaKalanDoviz, kalanDurumu, bicimle,
+    hesaplaKalanDoviz, kalanDurumu, bicimle, hesaplaBanknotToplam,
   };
 }
 
@@ -151,20 +159,109 @@ if (typeof document !== 'undefined') {
   const kurlar = kurlariYukle();
   ['STG', 'USD', 'EUR'].forEach((d) => { $('kur-' + d).value = kurlar[d] ?? ''; });
 
-  // Her tuşta anlık hesapla; kur değişince kaydet
+  // ---------------- TL banknot alt bölümü ----------------
+  const kupurAlanlari = [...document.querySelectorAll('[data-kupur]')];
+
+  // Girilen adetleri { 200: adet, 100: adet, ... } olarak okur
+  function adetleriOku() {
+    const adetler = {};
+    kupurAlanlari.forEach((el) => { adetler[el.dataset.kupur] = sayiyaCevir(el.value); });
+    return adetler;
+  }
+  function banknotGirildiMi() {
+    return kupurAlanlari.some((el) => el.value.trim() !== '') || $('coins').value.trim() !== '';
+  }
+  function banknotlariSil() {
+    kupurAlanlari.forEach((el) => { el.value = ''; });
+    $('coins').value = '';
+  }
+
+  // Adet değişince TL miktarını otomatik yaz
+  function banknottanTlYaz() {
+    const toplam = hesaplaBanknotToplam(adetleriOku(), sayiyaCevir($('coins').value));
+    $('miktar-TL').value = banknotGirildiMi() ? bicimle(toplam) : '';
+    $('banknot-ozet').textContent = banknotGirildiMi() ? '= ' + bicimle(toplam) + ' ₺' : '';
+  }
+
+  // Her tuşta anlık hesapla
   document.querySelectorAll('input').forEach((el) => {
     el.addEventListener('input', () => {
       if (el.id.startsWith('kur-')) kurlariKaydet();
+      if (el.dataset.kupur || el.id === 'coins') banknottanTlYaz();
+      // TL miktarı elle yazılırsa eski adetler geçersiz olur, silinir
+      if (el.id === 'miktar-TL' && banknotGirildiMi()) {
+        banknotlariSil();
+        $('banknot-ozet').textContent = '';
+      }
       guncelle();
     });
   });
 
-  // Temizle: tutarı ve miktarları siler, kurları korur
+  // Temizle: tutarı, miktarları ve banknot adetlerini siler, kurları korur
   $('temizle').addEventListener('click', () => {
     $('odenecek').value = '';
     DOVIZLER.forEach((d) => { $('miktar-' + d).value = ''; });
+    banknotlariSil();
+    $('banknot-ozet').textContent = '';
     guncelle();
     $('odenecek').focus();
+  });
+
+  // ---------------- Termal fiş ----------------
+  function fisHazirla() {
+    const odenecek = sayiyaCevir($('odenecek').value);
+    const s = (sol, sag, sinif = '') => `<div class="s ${sinif}"><span>${sol}</span><span>${sag}</span></div>`;
+    const simge = { STG: '£', USD: '$', EUR: '€', TL: '₺' };
+    let html = '';
+
+    html += '<div class="orta marka-fis">SOLİBET</div>';
+    html += '<div class="orta">ÖDEME DÖKÜMÜ</div>';
+    html += '<div class="orta kucuk">' + new Date().toLocaleString('tr-TR') + '</div>';
+    html += '<div class="kalin-cizgi"></div>';
+    html += s('ÖDENECEK', bicimle(odenecek) + ' ₺', 'buyuk');
+    html += '<div class="cizgi"></div>';
+
+    let toplam = 0;
+    DOVIZLER.forEach((d) => {
+      const miktar = sayiyaCevir($('miktar-' + d).value);
+      if (!miktar) return;
+      const kur = d === 'TL' ? 1 : sayiyaCevir($('kur-' + d).value);
+      const tl = hesaplaTlKarsiligi(miktar, kur);
+      toplam += tl;
+      if (d === 'TL') {
+        html += s('TL', bicimle(tl) + ' ₺');
+        // Banknot dökümü varsa satır satır yaz
+        if (banknotGirildiMi()) {
+          const adetler = adetleriOku();
+          Object.keys(adetler).map(Number).sort((a, b) => b - a).forEach((k) => {
+            if (adetler[k]) html += s(`${adetler[k]} x ${k} ₺`, bicimle(k * adetler[k]), 'girinti kucuk');
+          });
+          const coins = sayiyaCevir($('coins').value);
+          if (coins) html += s('Bozuk para', bicimle(coins), 'girinti kucuk');
+        }
+      } else {
+        html += s(`${d} ${bicimle(miktar)} ${simge[d]}`, bicimle(tl) + ' ₺');
+        html += s(`Kur: ${new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(kur)}`, '', 'girinti kucuk');
+      }
+    });
+
+    const kalan = hesaplaKalan(odenecek, toplam);
+    html += '<div class="cizgi"></div>';
+    html += s('TOPLAM ÖDENEN', bicimle(toplam) + ' ₺', 'buyuk');
+    const durum = kalanDurumu(kalan);
+    if (durum === 'eksik') html += s('KALAN', bicimle(kalan) + ' ₺');
+    else if (durum === 'fazla') html += s('PARA ÜSTÜ', bicimle(-kalan) + ' ₺');
+    else if (kalan !== 0) html += s('Yuvarlama farkı', bicimle(kalan) + ' ₺', 'kucuk');
+    html += '<div class="kalin-cizgi"></div>';
+    html += '<div class="imza">Müşteri İmza</div>';
+    html += '<div class="orta kucuk">Bizi tercih ettiğiniz için teşekkürler</div>';
+
+    $('fis').innerHTML = html;
+  }
+
+  $('yazdir').addEventListener('click', () => {
+    fisHazirla();
+    window.print();
   });
 
   guncelle();

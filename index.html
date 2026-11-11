@@ -52,6 +52,21 @@
         <span class="kur-yok">—</span>
         <output id="tl-TL">0,00</output>
       </div>
+
+      <!-- TL banknot alt bölümü: adet girilirse TL miktarı otomatik dolar -->
+      <details class="banknot" id="banknot-bolum">
+        <summary>TL banknot adetleri <span id="banknot-ozet"></span></summary>
+        <div class="banknot-izgara">
+          <label><span>200 ₺</span><input data-kupur="200" inputmode="numeric" autocomplete="off" placeholder="0"></label>
+          <label><span>100 ₺</span><input data-kupur="100" inputmode="numeric" autocomplete="off" placeholder="0"></label>
+          <label><span>50 ₺</span><input data-kupur="50" inputmode="numeric" autocomplete="off" placeholder="0"></label>
+          <label><span>20 ₺</span><input data-kupur="20" inputmode="numeric" autocomplete="off" placeholder="0"></label>
+          <label><span>10 ₺</span><input data-kupur="10" inputmode="numeric" autocomplete="off" placeholder="0"></label>
+          <label><span>5 ₺</span><input data-kupur="5" inputmode="numeric" autocomplete="off" placeholder="0"></label>
+          <label class="coins"><span>COINS (₺ tutar)</span><input id="coins" inputmode="decimal" autocomplete="off" placeholder="0,00"></label>
+        </div>
+        <p class="ipucu">Adet yazınca TL miktarı kendiliğinden dolar. TL miktarını elle yazarsan adetler silinir.</p>
+      </details>
     </div>
 
     <!-- Sonuçlar -->
@@ -69,8 +84,14 @@
 
     <p class="kalan-doviz" id="kalan-doviz"></p>
 
-    <button id="temizle" type="button">Temizle</button>
+    <div class="butonlar">
+      <button id="yazdir" type="button" class="yazdir">🖨 Fiş Yazdır</button>
+      <button id="temizle" type="button">Temizle</button>
+    </div>
   </main>
+
+  <!-- Termal yazıcı fişi: sadece yazdırırken görünür -->
+  <div id="fis" aria-hidden="true"></div>
 
   <script src="app.js"></script>
 </body>
