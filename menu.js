@@ -62,7 +62,7 @@
     const kesirli = oranTipi() === 'kesirli';
     document.querySelectorAll('#l-secimler .l-oran').forEach((el) => { el.placeholder = kesirli ? '5/2' : '3,50'; });
     $('l-ipucu').textContent = (kesirli
-      ? 'Kesirli: 5/2, 11/4, EVS yaz. Tek sayı yazarsan x/1 sayılır (5 = 5/1).'
+      ? 'Kesirli: 5/2, 11/4, EVS yaz. Düz sayı ondalık sayılır (5 = 4/1).'
       : 'Ondalık: 3,50 veya 3.50 yaz (nokta-virgül fark etmez). 5/2 ve EVS de olur.')
       + ' NR = at koşmadı, bahis iade.';
   }
@@ -133,7 +133,7 @@
     const satirlar = satirlariOku();
     const hatalar = [];
     const secimler = satirlar.map((s, i) => {
-      const oran = oranCevir(s.oran, oranTipi());
+      const oran = oranCevir(s.oran);
       if (s.sonuc !== 'void' && s.sonuc !== 'lost' && !(oran > 1)) hatalar.push(i + 1);
       return {
         oran: oran > 1 ? oran : 2, // kaybeden/NR atın oranı hesabı etkilemez
@@ -244,10 +244,13 @@
 
     satirlar.forEach((sat, i) => {
       const sec = girdi.secimler[i];
+      // Oran fişte seçilen tipte, yanında diğer tipte yazılır: "4/1 (5,00)" ya da "5,00 (4/1)"
+      // Kasiyer kesir yazdıysa (6/4 gibi) aynen korunur
       const yazilan = sat.oran.trim().toUpperCase();
-      // Kesirli tipte düz sayı x/1 diye yazılır
-      const gosterim = oranTipi() === 'kesirli' && /^\d+([.,]\d+)?$/.test(yazilan) ? yazilan + '/1' : yazilan;
-      const oranYazi = yazilan ? `${gosterim} (${kac(sec.oran)})` : '—';
+      const kesirHali = /[/-]|EV/.test(yazilan) ? yazilan.replace('-', '/') : kesirliYaz(sec.oran);
+      const oranYazi = !yazilan ? '—'
+        : oranTipi() === 'kesirli' ? `${kesirHali} (${tl(sec.oran)})`
+        : `${tl(sec.oran)} (${kesirHali})`;
       h += s(`${i + 1}. ${oranYazi}`, sonucAdi[sat.sonuc]);
       const ek = [];
       if (sec.rule4) ek.push(`Rule 4: ${sec.rule4}p`);

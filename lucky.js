@@ -104,12 +104,10 @@ const LUCKY_AILELER = [
 const AKUMULATOR_EN_AZ = 2;
 const AKUMULATOR_EN_COK = 20;
 
-// Oran metnini ondalık orana çevirir. tip: 'kesirli' veya 'ondalik'.
-//   Her iki tipte: "5/2" → 3.5, "EVS" → 2
-//   Kesirli tipte düz sayı x/1 sayılır: "5" → 6, "2,5" → 3.5
-//   Ondalık tipte düz sayı olduğu gibi: "3,5" veya "3.5" → 3.5
+// Oran metnini ondalık orana çevirir:
+//   "5/2" → 3.5   |   "EVS" → 2   |   düz sayı ondalık orandır: "5" → 5 (= 4/1)
 // Nokta ve virgül fark etmez. Geçersizse NaN döner.
-function oranCevir(metin, tip = 'ondalik') {
+function oranCevir(metin) {
   if (metin == null) return NaN;
   const s = String(metin).trim().toUpperCase().replace(/\s/g, '');
   if (s === '') return NaN;
@@ -122,8 +120,22 @@ function oranCevir(metin, tip = 'ondalik') {
   }
   if (!/^\d+(?:[.,]\d+)?$/.test(s)) return NaN;
   const d = Number(s.replace(',', '.'));
-  if (tip === 'kesirli') return d > 0 ? d + 1 : NaN;
   return d > 1 ? d : NaN;
+}
+
+// Ondalık oranı kesirli yazar: 5 → "4/1", 3.5 → "5/2", 2 → "EVS", 1.8 → "4/5"
+function kesirliYaz(ondalik) {
+  const x = ondalik - 1;
+  if (!(x > 0)) return '—';
+  if (Math.abs(x - 1) < 1e-9) return 'EVS';
+  // En yakın sade kesir (payda en fazla 100)
+  let enIyi = [Math.round(x), 1], hata = Math.abs(x - Math.round(x));
+  for (let payda = 1; payda <= 100 && hata > 1e-9; payda++) {
+    const pay = Math.round(x * payda);
+    const h = Math.abs(x - pay / payda);
+    if (pay > 0 && h < hata - 1e-12) { enIyi = [pay, payda]; hata = h; }
+  }
+  return enIyi[0] + '/' + enIyi[1];
 }
 
 // Bir seçimin kazanç ve plase çarpanları.
@@ -278,6 +290,6 @@ function turIcerigi(turKodu, n) {
 if (typeof module !== 'undefined') {
   module.exports = {
     LUCKY_TURLER, LUCKY_AILELER, AKUMULATOR_EN_AZ, AKUMULATOR_EN_COK,
-    kombinasyonlar, oranCevir, ayakCarpanlari, luckyHesapla, grupAdi, turIcerigi, satirSayisi, secimSayisi,
+    kombinasyonlar, oranCevir, kesirliYaz, ayakCarpanlari, luckyHesapla, grupAdi, turIcerigi, satirSayisi, secimSayisi,
   };
 }
