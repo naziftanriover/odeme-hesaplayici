@@ -1,6 +1,6 @@
 // Service worker: dosyaları önbelleğe alır, internet yokken de açılır.
 // Kodu değiştirince SURUM numarasını artır ki kasiyerlerde yenisi yüklensin.
-const SURUM = 'odeme-v13';
+const SURUM = 'odeme-v14';
 const DOSYALAR = [
   './', 'index.html', 'style.css', 'app.js', 'manifest.json',
   'icons/icon-192.png', 'icons/icon-512.png',

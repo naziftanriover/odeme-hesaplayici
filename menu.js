@@ -75,6 +75,18 @@
   });
   oranTipiUygula();
 
+  // Bahis girişi: satır başı ya da toplam yatırılan. Seçim hatırlanır.
+  const bahisTipi = () => $('l-bahis-tipi').value;
+  try { const b = localStorage.getItem('odeme-bahis-tipi'); if (b) $('l-bahis-tipi').value = b; } catch (e) {}
+  function bahisTipiUygula() {
+    $('l-birim-etiket').textContent = bahisTipi() === 'toplam' ? 'Toplam yatırılan' : 'Satır başı bahis';
+  }
+  $('l-bahis-tipi').addEventListener('change', () => {
+    try { localStorage.setItem('odeme-bahis-tipi', bahisTipi()); } catch (e) {}
+    bahisTipiUygula();
+  });
+  bahisTipiUygula();
+
   let aktifTur = null;
   // Seçimlerin girilen değerleri; tür değişince ortak satırlar korunur
   let kayit = [];
@@ -132,9 +144,19 @@
   // Ekrandaki değerlerle hesabı yapar. Eksik bilgi varsa null döner.
   function luckyGirdi() {
     const t = LUCKY_TURLER[aktifTur];
-    const birim = sayiyaCevir($('l-birim').value);
+    const girilen = sayiyaCevir($('l-birim').value);
     const [pay, payda] = $('l-plase').value.split('/').map(Number);
     const ewMod = $('l-ew').value;
+    // Toplam girildiyse satır başı = toplam ÷ satır sayısı. Küsuratlı olabilir (100 ÷ 15),
+    // bu yüzden motora tam kesir olarak verilir; toplam bahis kuruşu kuruşuna girilen tutar olur.
+    const satirAdedi = satirSayisi(aktifTur) * (ewMod ? 2 : 1);
+    const toplamModu = bahisTipi() === 'toplam';
+    const birim = toplamModu ? girilen / satirAdedi : girilen;
+    let birimBahis = girilen;
+    if (toplamModu && girilen > 0) {
+      const k = kesreCevir(String(girilen));
+      birimBahis = { p: k.p, q: k.q * BigInt(satirAdedi) };
+    }
     const satirlar = satirlariOku();
     const hatalar = [];      // oranı eksik/hatalı satırlar
     const r4Hatalari = [];   // Rule 4 0-90 dışında veya hatalı yazılmış satırlar
@@ -157,9 +179,9 @@
       };
     });
     return {
-      hatalar, r4Hatalari, birim, birimGecerli: sayiGecerliMi($('l-birim').value), satirlar,
+      hatalar, r4Hatalari, birim, girilen, toplamModu, birimGecerli: sayiGecerliMi($('l-birim').value), satirlar,
       girdi: {
-        tur: aktifTur, secimler, birimBahis: birim,
+        tur: aktifTur, secimler, birimBahis, birimSayi: birim, toplamModu,
         ew: Boolean(ewMod), ewMod: ewMod || 'winToWin',
         plaseKesri: { pay, payda },
         bonusHepsiYuzde: t.tekli ? sayiyaCevir($('l-bonus-yuzde').value) : 0,
@@ -183,9 +205,11 @@
       ? 'eşit bölünmüş EW\'de bonus yok'
       : `tek kazanan ×${$('l-bonus-carpan').value || '1'} +1 · hepsi kazanırsa %${$('l-bonus-yuzde').value || '0'} · NR varsa yok`;
 
-    const { hatalar, r4Hatalari, birim, birimGecerli, girdi } = luckyGirdi();
+    const { hatalar, r4Hatalari, birim, girilen, toplamModu, birimGecerli, girdi } = luckyGirdi();
     const satir = satirSayisi(aktifTur) * (girdi.ew ? 2 : 1);
-    $('l-satir-notu').textContent = `${satir} satır × ${tl(birim)}`;
+    // Küsuratlı satır başı 4 haneyle gösterilir (100 ÷ 15 = 6,6667)
+    const birimYazi = Math.abs(birim * 100 - Math.round(birim * 100)) > 1e-9 ? bicimle(birim, 4) : tl(birim);
+    $('l-satir-notu').textContent = `${satir} satır × ${birimYazi}`;
 
     const hata = $('l-hata');
     $('l-birim').classList.toggle('hatali', !birimGecerli);
@@ -194,10 +218,10 @@
       sat.querySelector('.l-r4').classList.toggle('hatali', r4Hatalari.includes(i + 1));
     });
     if (!(birim > 0) || hatalar.length || r4Hatalari.length) {
-      hata.textContent = !(birim > 0) ? 'Satır başı bahis tutarını yaz (0\'dan büyük).'
+      hata.textContent = !(birim > 0) ? (toplamModu ? 'Toplam yatırılan tutarı yaz (0\'dan büyük).' : 'Satır başı bahis tutarını yaz (0\'dan büyük).')
         : hatalar.length ? `Oran eksik veya hatalı: ${hatalar.join(', ')}. seçim`
         : `Rule 4 0 ile 90 arasında olmalı: ${r4Hatalari.join(', ')}. seçim`;
-      $('l-toplam-bahis').textContent = tl(birim * satir);
+      $('l-toplam-bahis').textContent = tl(toplamModu ? girilen : birim * satir);
       $('l-getiri').textContent = '0,00';
       $('l-kar').textContent = '—';
       $('l-detay').innerHTML = '';
@@ -261,7 +285,9 @@
     h += `<div class="orta">${t.ad.toLocaleUpperCase('tr-TR')} HESABI</div>`;
     h += '<div class="orta kucuk">' + new Date().toLocaleString('tr-TR') + '</div>';
     h += '<div class="kalin-cizgi"></div>';
-    h += s('Satır başı', tl(girdi.birimBahis));
+    const b = girdi.birimSayi;
+    const kusurat = Math.abs(b * 100 - Math.round(b * 100)) > 1e-9;
+    h += s('Satır başı', kusurat ? bicimle(b, 4) : tl(b));
     h += s('Satır', String(r.satirSayisi) + (girdi.ew ? ' (EW)' : ''));
     if (girdi.ew) {
       h += s('Each-Way', girdi.ewMod === 'equallyDivided' ? 'Eşit bölünmüş' : 'Win to Win', 'kucuk');
