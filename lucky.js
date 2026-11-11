@@ -208,7 +208,9 @@ function kurus(a) {
 // Dead heat: kazanan atta Win kısmı, plase atta (son plase yerinde
 // beraberlik) Plase kısmı berabere at sayısına bölünür.
 function ayakCarpanlari(secim, plaseKesri) {
-  const oran = (secim.oranMetin != null && oranKesri(secim.oranMetin)) || kesreCevir(secim.oran);
+  // Oran yazısı okunamazsa sayı kullanılır; o da yoksa 2 (kaybeden/NR atta sonucu etkilemez)
+  const oran = (secim.oranMetin != null && oranKesri(secim.oranMetin))
+    || (Number(secim.oran) > 1 ? kesreCevir(secim.oran) : K(2n));
   const r4 = kesreCevir(Math.min(Math.max(secim.rule4 || 0, 0), 90));
   const kazanOrani = kTopla(kCarp(kCikar(oran, BIR), kCikar(BIR, kBol(r4, K(100n)))), BIR);
   const plaseOrani = kTopla(kCarp(kCikar(kazanOrani, BIR), K(BigInt(plaseKesri.pay), BigInt(plaseKesri.payda))), BIR);
@@ -298,14 +300,19 @@ function luckyHesapla(girdi) {
     plaseToplam = kTopla(plaseToplam, p);
   }
 
-  // Şirket bonusları (sadece kazanç kısmına)
+  // Şirket bonusları (sadece Win kısmına). AceOdds ile aynı kurallar:
+  //  - herhangi bir at NR ise hiçbir bonus yok
+  //  - EW "eşit bölünmüş" modunda bonus yok
   let bonus = SIFIR;
+  const bonusYok = bolunmus || girdi.secimler.some((s) => s.sonuc === 'void');
   const kazananlar = girdi.secimler.filter((s) => s.sonuc === 'won').length;
-  if (kazananlar === n && girdi.bonusHepsiYuzde > 0) {
+  if (!bonusYok && kazananlar === n && girdi.bonusHepsiYuzde > 0) {
     bonus = kTopla(bonus, kBol(kCarp(kazancToplam, kesreCevir(Math.min(girdi.bonusHepsiYuzde, 100))), K(100n)));
   }
   const carpan = girdi.bonusTekKazanCarpan;
-  if (t.tekli && kazananlar === 1 && carpan > 1) {
+  // Tek kazanan: fiyat × çarpan + 1. NR varsa NR 2 sayılır, bonus olmaz.
+  // Dead heat varsa bonus da berabere at sayısına bölünür (AceOdds gibi).
+  if (!bonusYok && t.tekli && kazananlar === 1 && carpan > 1) {
     const idx = girdi.secimler.findIndex((s) => s.sonuc === 'won');
     const tekliSayisi = parcalar.filter((c) => c.tip === 'kat' && c.ayaklar.length === 1 && c.ayaklar[0] === idx).length;
     const dh = K(1n, BigInt(girdi.secimler[idx].dhKazan > 1 ? girdi.secimler[idx].dhKazan : 1));

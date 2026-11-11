@@ -146,6 +146,7 @@
       if (!sayiGecerliMi(s.r4) || r4 > 90) r4Hatalari.push(i + 1);
       return {
         oran: oran > 1 ? oran : 2, // kaybeden/NR atın oranı hesabı etkilemez
+        oranMetin: oran > 1 ? s.oran : undefined, // motor tam kesirle hesaplasın (4/6 gibi)
         oranGecerli: oran > 1,
         sonuc: s.sonuc,
         rule4: Math.min(r4, 90),
@@ -173,8 +174,9 @@
       s.dataset.sonuc = s.querySelector('.l-sonuc').value;
     });
     $('l-plase').disabled = !$('l-ew').value;
-    $('l-bonus-ozet').textContent =
-      `tek kazanan ×${$('l-bonus-carpan').value || '1'} +1 · hepsi kazanırsa %${$('l-bonus-yuzde').value || '0'}`;
+    $('l-bonus-ozet').textContent = $('l-ew').value === 'equallyDivided'
+      ? 'eşit bölünmüş EW\'de bonus yok'
+      : `tek kazanan ×${$('l-bonus-carpan').value || '1'} +1 · hepsi kazanırsa %${$('l-bonus-yuzde').value || '0'} · NR varsa yok`;
 
     const { hatalar, r4Hatalari, birim, birimGecerli, girdi } = luckyGirdi();
     const satir = satirSayisi(aktifTur) * (girdi.ew ? 2 : 1);
